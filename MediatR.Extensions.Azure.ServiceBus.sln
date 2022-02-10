@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32002.261
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediatR.Extensions.Azure.ServiceBus", "MediatR.Extensions.Azure.ServiceBus\MediatR.Extensions.Azure.ServiceBus.csproj", "{55DA3666-2C38-4801-9342-AF2E8DDCF905}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediatR.Extensions.Azure.ServiceBus.Tests", "MediatR.Extensions.Azure.ServiceBus.Tests\MediatR.Extensions.Azure.ServiceBus.Tests.csproj", "{AB31A199-F634-4965-9102-4DB748E0DDE3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{55DA3666-2C38-4801-9342-AF2E8DDCF905}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55DA3666-2C38-4801-9342-AF2E8DDCF905}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55DA3666-2C38-4801-9342-AF2E8DDCF905}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55DA3666-2C38-4801-9342-AF2E8DDCF905}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB31A199-F634-4965-9102-4DB748E0DDE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB31A199-F634-4965-9102-4DB748E0DDE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB31A199-F634-4965-9102-4DB748E0DDE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB31A199-F634-4965-9102-4DB748E0DDE3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5DC81BAA-0572-4286-A974-994786492158}
+	EndGlobalSection
+EndGlobal
