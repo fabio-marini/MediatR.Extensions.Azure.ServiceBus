@@ -5,6 +5,9 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit.Abstractions;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
@@ -88,6 +91,46 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     var cmd = ActivatorUtilities.CreateInstance<SendQueueMessageCommand<TResponse>>(sp, Options.Create(opt));
 
                     return ActivatorUtilities.CreateInstance<SendQueueMessageResponseBehavior<TRequest, TResponse>>(sp, cmd);
+                })
+
+                ;
+        }
+
+        public static IServiceCollection AddReceiveQueueMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        {
+            return services
+
+                .AddTransient<IRequestPreProcessor<TRequest>, ReceiveQueueMessageRequestProcessor<TRequest>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TRequest>>>().Get("Processors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TRequest>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<ReceiveQueueMessageRequestProcessor<TRequest>>(sp, cmd);
+                })
+                .AddTransient<IRequestPostProcessor<TRequest, TResponse>, ReceiveQueueMessageResponseProcessor<TRequest, TResponse>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TResponse>>>().Get("Processors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TResponse>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<ReceiveQueueMessageResponseProcessor<TRequest, TResponse>>(sp, cmd);
+                })
+                .AddTransient<IPipelineBehavior<TRequest, TResponse>, ReceiveQueueMessageRequestBehavior<TRequest, TResponse>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TRequest>>>().Get("Behaviors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TRequest>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<ReceiveQueueMessageRequestBehavior<TRequest, TResponse>>(sp, cmd);
+                })
+                .AddTransient<IPipelineBehavior<TRequest, TResponse>, ReceiveQueueMessageResponseBehavior<TRequest, TResponse>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TResponse>>>().Get("Behaviors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TResponse>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<ReceiveQueueMessageResponseBehavior<TRequest, TResponse>>(sp, cmd);
                 })
 
                 ;
