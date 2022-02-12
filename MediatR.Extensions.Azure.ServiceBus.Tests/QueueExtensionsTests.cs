@@ -24,17 +24,14 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
     public class QueueExtensionsTests
     {
         // TODO: add TestOutputLogger + cancel if queue has zero messages
-
         // FIXME: TT Xunit extension breaks IConfig (gives GetValue doesn't exist)! :(
 
-        // TODO: delete management fixture if not used...
-
-        // TODO: share message and exception handlers in a single ManagementFixture?
-        // TODO: write integration tests without fixtures first, then add if necessary (management client has all features)...
+        // TODO: split into queues and topics projects?
+        // TODO: add message and exception handlers as default options?
 
         // TODO: add a receive policy that stops after receiving all messages
-        // TODO: update storage test fixtures so tables/containers are deleted on dispose?
 
+        // TODO: update storage test fixtures so tables/containers are deleted on dispose?
         // FIXME: BlobClient is a delegate, but AS table and queue clients are instances - what should SB topic and queue clients be?!?
 
         private readonly ITestOutputHelper log;
