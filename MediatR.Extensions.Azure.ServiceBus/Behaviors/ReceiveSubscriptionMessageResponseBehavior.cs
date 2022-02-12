@@ -5,7 +5,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
 {
     public class ReceiveSubscriptionMessageResponseBehavior<TRequest, TResponse> : ResponseBehaviorBase<TRequest, TResponse> where TRequest : IRequest<TResponse>
     {
-        public ReceiveSubscriptionMessageResponseBehavior(SendTopicMessageCommand<TResponse> cmd, PipelineContext ctx = null, ILogger log = null) : base(cmd, ctx, log)
+        public ReceiveSubscriptionMessageResponseBehavior(ReceiveSubscriptionMessageCommand<TResponse> cmd, PipelineContext ctx = null, ILogger log = null) : base(cmd, ctx, log)
         {
         }
     }

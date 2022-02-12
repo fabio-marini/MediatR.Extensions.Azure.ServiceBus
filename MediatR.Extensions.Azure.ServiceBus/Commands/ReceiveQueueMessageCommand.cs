@@ -41,14 +41,14 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
             var messageHandler = new Func<Message, CancellationToken, Task>((msg, tkn) =>
             {
-                log.LogDebug($"{DateTime.Now} - Received message {msg.MessageId}");
+                log.LogDebug($"{DateTime.Now.ToString("hh:mm:ss.fff")} - Received message {msg.MessageId}");
 
                 return Task.CompletedTask;
             });
 
             var exceptionHandler = new Func<ExceptionReceivedEventArgs, Task>((args) =>
             {
-                log.LogDebug($"{DateTime.Now} - Received exception {args.Exception.Message}");
+                log.LogDebug($"{DateTime.Now.ToString("hh:mm:ss.fff")} - Received exception {args.Exception.Message}");
 
                 return Task.CompletedTask;
             });
@@ -63,7 +63,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
                 receivePolicy.Execute(() =>
                 {
-                    log.LogDebug($"{DateTime.Now} - Executing receive policy");
+                    log.LogDebug($"{DateTime.Now.ToString("hh:mm:ss.fff")} - Executing receive policy");
 
                     return cancellationToken;
                 });

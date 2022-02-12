@@ -1,35 +1,28 @@
 ﻿using FluentAssertions;
-using MediatR.Pipeline;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Management;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
-using Xunit.Sdk;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
-    public class TestMethodNameOrderer : ITestCaseOrderer
+    public class TestQueues
     {
-        public IEnumerable<TTestCase> OrderTestCases<TTestCase>(IEnumerable<TTestCase> testCases) where TTestCase : ITestCase
-        {
-            return testCases.OrderBy(t => t.TestMethod.Method.Name);
-        }
+        public const string RequestProcessor = "request-processor";
+        public const string ResponseProcessor = "response-processor";
+        public const string RequestBehavior = "request-behavior";
+        public const string ResponseBehavior = "response-behavior";
     }
 
     [Trait("TestCategory", "Integration")]
     [TestCaseOrderer("MediatR.Extensions.Azure.ServiceBus.Tests.TestMethodNameOrderer", "MediatR.Extensions.Azure.ServiceBus.Tests")]
     public class QueueExtensionsTests
     {
-        // FIXME: IRequestPreProcessor has received messages from all queues because of options config?!?
-        // FIXME: avoid having multiple extensions receiving on the same queue?
-        // FIXME: restore AddExtensions for receive (only has preproc)
         // TODO: add TestOutputLogger + cancel if queue has zero messages
 
         // FIXME: TT Xunit extension breaks IConfig (gives GetValue doesn't exist)! :(
@@ -62,14 +55,14 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
         public static IEnumerable<object[]> QueueNames()
         {
-            yield return new object[] { "mediator/request-processor" };
-            yield return new object[] { "mediator/response-processor" };
-            yield return new object[] { "mediator/request-behavior" };
-            yield return new object[] { "mediator/response-behavior" };
+            yield return new object[] { TestQueues.RequestProcessor };
+            yield return new object[] { TestQueues.ResponseProcessor };
+            yield return new object[] { TestQueues.RequestBehavior };
+            yield return new object[] { TestQueues.ResponseBehavior };
         }
 
         [Theory(DisplayName = "Queues are recreated"), MemberData(nameof(QueueNames))]
-        public async Task Test01(string queuePath)
+        public async Task Step01(string queuePath)
         {
             if (await managementClient.QueueExistsAsync(queuePath))
             {
@@ -90,7 +83,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         }
 
         [Theory(DisplayName = "Send extensions are executed"), MemberData(nameof(QueueNames))]
-        public async Task Test02(string queuePath)
+        public async Task Step02(string queuePath)
         {
             var serviceProvider = new ServiceCollection()
 
@@ -110,7 +103,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         }
 
         [Theory(DisplayName = "Queues have messages"), MemberData(nameof(QueueNames))]
-        public async Task Test03(string queuePath)
+        public async Task Step03(string queuePath)
         {
             var runtimeInfo = await managementClient.GetQueueRuntimeInfoAsync(queuePath);
 
@@ -118,30 +111,19 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         }
 
         [Theory(DisplayName = "Receive extensions are executed"), MemberData(nameof(QueueNames))]
-        public async Task Test04(string queuePath)
+        public async Task Step04(string queuePath)
         {
-            // FIXME: how to ensure each extension only receives the messages from its assigned queue?
-            //        i.e. this should leave 0 messages in request-processor and 4 in the others
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddSingleton<QueueClient>(sp => new QueueClient(connectionString, queuePath))
+                .AddTransient<QueueClient>(sp => new QueueClient(connectionString, queuePath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddQueueOptions<EchoRequest, EchoResponse>()
-                .AddTransient<IRequestPreProcessor<EchoRequest>, ReceiveQueueMessageRequestProcessor<EchoRequest>>(sp =>
-                {
-                    var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<EchoRequest>>>().Get("Processors");
-
-                    var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<EchoRequest>>(sp, Options.Create(opt));
-
-                    return ActivatorUtilities.CreateInstance<ReceiveQueueMessageRequestProcessor<EchoRequest>>(sp, cmd);
-                })
+                .AddReceiveQueueMessageExtensions<EchoRequest, EchoResponse>(queuePath)
 
                 .BuildServiceProvider();
 
-
-            // command implementation - token is received from mediator
-            using var cancelSource = new CancellationTokenSource(10000);
+            using var cancelSource = new CancellationTokenSource(3000);
 
             var med = serviceProvider.GetRequiredService<IMediator>();
 
@@ -151,7 +133,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         }
 
         [Theory(DisplayName = "Queues have messages"), MemberData(nameof(QueueNames))]
-        public async Task Test05(string queuePath)
+        public async Task Step05(string queuePath)
         {
             var runtimeInfo = await managementClient.GetQueueRuntimeInfoAsync(queuePath);
 

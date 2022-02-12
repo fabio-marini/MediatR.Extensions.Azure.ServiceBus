@@ -5,9 +5,6 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit.Abstractions;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
@@ -30,7 +27,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .Configure<IServiceProvider>((opt, svc) =>
                 {
                     opt.IsEnabled = true;
-                    opt.QueueClient = (req, ctx) => svc.GetRequiredService<QueueClient>();
+                    opt.QueueClient = (res, ctx) => svc.GetRequiredService<QueueClient>();
                     opt.Message = (res, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(res)));
                 })
                 .Services
@@ -48,7 +45,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .Configure<IServiceProvider>((opt, svc) =>
                 {
                     opt.IsEnabled = true;
-                    opt.QueueClient = (req, ctx) => svc.GetRequiredService<QueueClient>();
+                    opt.QueueClient = (res, ctx) => svc.GetRequiredService<QueueClient>();
                     opt.Message = (res, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(res)));
                 })
                 .Services
@@ -96,44 +93,58 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 ;
         }
 
-        public static IServiceCollection AddReceiveQueueMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        public static IServiceCollection AddReceiveQueueMessageExtensions<TRequest, TResponse>(this IServiceCollection services, string queuePath) where TRequest : IRequest<TResponse>
         {
-            return services
+            // only execute one receive extension at the time, otherwise the first will consume the
+            // cancellation token and when the next 3 start they will be cancelled straight away...
+            switch (queuePath)
+            {
+                case TestQueues.RequestProcessor:
+                    services.AddTransient<IRequestPreProcessor<TRequest>, ReceiveQueueMessageRequestProcessor<TRequest>>(sp =>
+                    {
+                        var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TRequest>>>().Get("Processors");
 
-                .AddTransient<IRequestPreProcessor<TRequest>, ReceiveQueueMessageRequestProcessor<TRequest>>(sp =>
-                {
-                    var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TRequest>>>().Get("Processors");
+                        var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TRequest>>(sp, Options.Create(opt));
 
-                    var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TRequest>>(sp, Options.Create(opt));
+                        return ActivatorUtilities.CreateInstance<ReceiveQueueMessageRequestProcessor<TRequest>>(sp, cmd);
+                    });
+                    break;
 
-                    return ActivatorUtilities.CreateInstance<ReceiveQueueMessageRequestProcessor<TRequest>>(sp, cmd);
-                })
-                .AddTransient<IRequestPostProcessor<TRequest, TResponse>, ReceiveQueueMessageResponseProcessor<TRequest, TResponse>>(sp =>
-                {
-                    var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TResponse>>>().Get("Processors");
+                case TestQueues.ResponseProcessor:
+                    services.AddTransient<IRequestPostProcessor<TRequest, TResponse>, ReceiveQueueMessageResponseProcessor<TRequest, TResponse>>(sp =>
+                    {
+                        var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TResponse>>>().Get("Processors");
 
-                    var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TResponse>>(sp, Options.Create(opt));
+                        var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TResponse>>(sp, Options.Create(opt));
 
-                    return ActivatorUtilities.CreateInstance<ReceiveQueueMessageResponseProcessor<TRequest, TResponse>>(sp, cmd);
-                })
-                .AddTransient<IPipelineBehavior<TRequest, TResponse>, ReceiveQueueMessageRequestBehavior<TRequest, TResponse>>(sp =>
-                {
-                    var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TRequest>>>().Get("Behaviors");
+                        return ActivatorUtilities.CreateInstance<ReceiveQueueMessageResponseProcessor<TRequest, TResponse>>(sp, cmd);
+                    });
+                    break;
 
-                    var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TRequest>>(sp, Options.Create(opt));
+                case TestQueues.RequestBehavior:
+                    services.AddTransient<IPipelineBehavior<TRequest, TResponse>, ReceiveQueueMessageRequestBehavior<TRequest, TResponse>>(sp =>
+                    {
+                        var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TRequest>>>().Get("Behaviors");
 
-                    return ActivatorUtilities.CreateInstance<ReceiveQueueMessageRequestBehavior<TRequest, TResponse>>(sp, cmd);
-                })
-                .AddTransient<IPipelineBehavior<TRequest, TResponse>, ReceiveQueueMessageResponseBehavior<TRequest, TResponse>>(sp =>
-                {
-                    var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TResponse>>>().Get("Behaviors");
+                        var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TRequest>>(sp, Options.Create(opt));
 
-                    var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TResponse>>(sp, Options.Create(opt));
+                        return ActivatorUtilities.CreateInstance<ReceiveQueueMessageRequestBehavior<TRequest, TResponse>>(sp, cmd);
+                    });
+                    break;
 
-                    return ActivatorUtilities.CreateInstance<ReceiveQueueMessageResponseBehavior<TRequest, TResponse>>(sp, cmd);
-                })
+                case TestQueues.ResponseBehavior:
+                    services.AddTransient<IPipelineBehavior<TRequest, TResponse>, ReceiveQueueMessageResponseBehavior<TRequest, TResponse>>(sp =>
+                    {
+                        var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TResponse>>>().Get("Behaviors");
 
-                ;
+                        var cmd = ActivatorUtilities.CreateInstance<ReceiveQueueMessageCommand<TResponse>>(sp, Options.Create(opt));
+
+                        return ActivatorUtilities.CreateInstance<ReceiveQueueMessageResponseBehavior<TRequest, TResponse>>(sp, cmd);
+                    });
+                    break;
+            }
+
+            return services;
         }
     }
 }
