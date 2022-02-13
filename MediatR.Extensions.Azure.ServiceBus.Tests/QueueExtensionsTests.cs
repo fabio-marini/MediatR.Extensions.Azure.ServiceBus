@@ -23,8 +23,9 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
     [TestCaseOrderer("Timeless.Testing.Xunit.TestMethodNameOrderer", "MediatR.Extensions.Azure.ServiceBus.Tests")]
     public class QueueExtensionsTests
     {
-        // TODO: generate extensions classes and ctors from command
-        // TODO: add commands to send scheduled message and receive session
+        // TODO: update abstractions docs with section about VS code snippets
+
+        // TODO: add placeholders for commands to send scheduled message and receive session
 
         // TODO: how to terminate after receiving a single message?
         // TODO: add a receive policy that stops after receiving all messages
@@ -33,7 +34,6 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
         // TODO: to receive messages from the DLQ use /$deadletterqueue path
 
-        // TODO: split into queues and topics projects?
         // TODO: add message and exception handlers as default options? Also support MessageHandlerOptions?
         // TODO: add commands unit tests + docs
         // TODO: examples with custom message/exception handlers and receive policy

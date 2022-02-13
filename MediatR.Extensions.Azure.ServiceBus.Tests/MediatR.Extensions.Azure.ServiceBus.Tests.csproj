@@ -24,7 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MediatR.Extensions.Azure.ServiceBus\MediatR.Extensions.Azure.ServiceBus.csproj" />
+    <ProjectReference Include="..\MediatR.Extensions.Azure.ServiceBus.Queues\MediatR.Extensions.Azure.ServiceBus.Queues.csproj" />
+    <ProjectReference Include="..\MediatR.Extensions.Azure.ServiceBus.Topics\MediatR.Extensions.Azure.ServiceBus.Topics.csproj" />
   </ItemGroup>
 
 </Project>

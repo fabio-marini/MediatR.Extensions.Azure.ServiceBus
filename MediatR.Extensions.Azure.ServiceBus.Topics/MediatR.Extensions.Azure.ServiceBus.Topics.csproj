@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Authors>Fabio Marini</Authors>
-    <Description>MediatR extensions for Azure Service Bus</Description>
+    <Description>MediatR extensions for Azure Service Bus topics and subscriptions</Description>
     <PackageVersion>1.0.0</PackageVersion>
     <PackageProjectUrl>https://github.com/fabio-marini/MediatR.Extensions.Azure.ServiceBus</PackageProjectUrl>
     <RepositoryUrl>https://github.com/fabio-marini/MediatR.Extensions.Azure.ServiceBus</RepositoryUrl>
@@ -15,4 +15,5 @@
     <PackageReference Include="MediatR.Extensions.Abstractions" Version="1.0.0" />
     <PackageReference Include="Polly" Version="7.2.3" />
   </ItemGroup>
+
 </Project>
