@@ -39,11 +39,14 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid QueueClient");
             }
 
-            var messageHandler = new Func<Message, CancellationToken, Task>((msg, tkn) =>
+            var messageHandler = new Func<Message, CancellationToken, Task>(async (msg, tkn) =>
             {
                 log.LogDebug($"{DateTime.Now.ToString("hh:mm:ss.fff")} - Received message {msg.MessageId}");
 
-                return Task.CompletedTask;
+                if (opt.Value.Received != null)
+                {
+                    await opt.Value.Received(msg, ctx, message);
+                }
             });
 
             var exceptionHandler = new Func<ExceptionReceivedEventArgs, Task>((args) =>

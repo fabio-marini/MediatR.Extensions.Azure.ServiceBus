@@ -3,7 +3,7 @@ using System.Linq;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace MediatR.Extensions.Azure.ServiceBus.Tests
+namespace Timeless.Testing.Xunit
 {
     public class TestMethodNameOrderer : ITestCaseOrderer
     {

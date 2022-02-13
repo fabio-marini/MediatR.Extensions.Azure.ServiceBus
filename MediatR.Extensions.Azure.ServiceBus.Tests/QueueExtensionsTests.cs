@@ -20,16 +20,23 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
     }
 
     [Trait("TestCategory", "Integration")]
-    [TestCaseOrderer("MediatR.Extensions.Azure.ServiceBus.Tests.TestMethodNameOrderer", "MediatR.Extensions.Azure.ServiceBus.Tests")]
+    [TestCaseOrderer("Timeless.Testing.Xunit.TestMethodNameOrderer", "MediatR.Extensions.Azure.ServiceBus.Tests")]
     public class QueueExtensionsTests
     {
-        // TODO: add TestOutputLogger + cancel if queue has zero messages
+        // TODO: generate extensions classes and ctors from command
+        // TODO: add commands to send scheduled message and receive session
+
+        // TODO: how to terminate after receiving a single message?
+        // TODO: add a receive policy that stops after receiving all messages
+
         // FIXME: TT Xunit extension breaks IConfig (gives GetValue doesn't exist)! :(
 
-        // TODO: split into queues and topics projects?
-        // TODO: add message and exception handlers as default options?
+        // TODO: to receive messages from the DLQ use /$deadletterqueue path
 
-        // TODO: add a receive policy that stops after receiving all messages
+        // TODO: split into queues and topics projects?
+        // TODO: add message and exception handlers as default options? Also support MessageHandlerOptions?
+        // TODO: add commands unit tests + docs
+        // TODO: examples with custom message/exception handlers and receive policy
 
         // TODO: update storage test fixtures so tables/containers are deleted on dispose?
         // FIXME: BlobClient is a delegate, but AS table and queue clients are instances - what should SB topic and queue clients be?!?
@@ -67,7 +74,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
                 if (runtimeInfo.MessageCount > 0)
                 {
-                    // only recreate queue if it has any messsages...
+                    // only recreate queue if it has any messages...
                     await managementClient.DeleteQueueAsync(queuePath);
 
                     await managementClient.CreateQueueAsync(queuePath);
