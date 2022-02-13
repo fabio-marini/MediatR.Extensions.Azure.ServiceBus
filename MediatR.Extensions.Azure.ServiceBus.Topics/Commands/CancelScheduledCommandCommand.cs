@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Topics
 {
-    public class RegisterSessionHandlerCommand<TMessage> : ICommand<TMessage>
+    public class CancelScheduledCommandCommand<TMessage> : ICommand<TMessage>
     {
-        private readonly IOptions<SubscriptionOptions<TMessage>> opt;
+        private readonly IOptions<TopicOptions<TMessage>> opt;
         private readonly PipelineContext ctx;
         private readonly ILogger log;
 
-        public RegisterSessionHandlerCommand(IOptions<SubscriptionOptions<TMessage>> opt, PipelineContext ctx = null, ILogger log = null)
+        public CancelScheduledCommandCommand(IOptions<TopicOptions<TMessage>> opt, PipelineContext ctx = null, ILogger log = null)
         {
             this.opt = opt;
             this.ctx = ctx;

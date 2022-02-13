@@ -6,15 +6,15 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Extensions.Azure.ServiceBus.Topics
+namespace MediatR.Extensions.Azure.ServiceBus.Queues
 {
-    public class RegisterSessionHandlerCommand<TMessage> : ICommand<TMessage>
+    public class ScheduleMessageCommand<TMessage> : ICommand<TMessage>
     {
-        private readonly IOptions<SubscriptionOptions<TMessage>> opt;
+        private readonly IOptions<QueueOptions<TMessage>> opt;
         private readonly PipelineContext ctx;
         private readonly ILogger log;
 
-        public RegisterSessionHandlerCommand(IOptions<SubscriptionOptions<TMessage>> opt, PipelineContext ctx = null, ILogger log = null)
+        public ScheduleMessageCommand(IOptions<QueueOptions<TMessage>> opt, PipelineContext ctx = null, ILogger log = null)
         {
             this.opt = opt;
             this.ctx = ctx;

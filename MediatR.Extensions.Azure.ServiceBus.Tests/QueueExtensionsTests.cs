@@ -26,11 +26,6 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         // TODO: update abstractions docs with section about VS code snippets +
         // TODO: fix options snippet - options are not named after the command!
 
-        // TODO: rename receive message register message handler (queues and topics)
-        // TODO: schedule message and cancel scheduled message (queues and topics)
-
-        // TODO: add placeholders for commands to send scheduled message and receive session
-
         // TODO: how to terminate after receiving a single message?
         // TODO: add a receive policy that stops after receiving all messages
 
