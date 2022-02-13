@@ -1,4 +1,5 @@
-﻿using MediatR.Pipeline;
+﻿using MediatR.Extensions.Azure.ServiceBus.Topics;
+using MediatR.Pipeline;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -100,37 +101,37 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         {
             return services
 
-                .AddTransient<IRequestPreProcessor<TRequest>, SendTopicMessageRequestProcessor<TRequest>>(sp =>
+                .AddTransient<IRequestPreProcessor<TRequest>, SendMessageRequestProcessor<TRequest>>(sp =>
                  {
                      var opt = sp.GetRequiredService<IOptionsSnapshot<TopicOptions<TRequest>>>().Get("Processors");
 
-                     var cmd = ActivatorUtilities.CreateInstance<SendTopicMessageCommand<TRequest>>(sp, Options.Create(opt));
+                     var cmd = ActivatorUtilities.CreateInstance<SendMessageCommand<TRequest>>(sp, Options.Create(opt));
 
-                     return ActivatorUtilities.CreateInstance<SendTopicMessageRequestProcessor<TRequest>>(sp, cmd);
+                     return ActivatorUtilities.CreateInstance<SendMessageRequestProcessor<TRequest>>(sp, cmd);
                  })
-                .AddTransient<IRequestPostProcessor<TRequest, TResponse>, SendTopicMessageResponseProcessor<TRequest, TResponse>>(sp =>
+                .AddTransient<IRequestPostProcessor<TRequest, TResponse>, SendMessageResponseProcessor<TRequest, TResponse>>(sp =>
                 {
                     var opt = sp.GetRequiredService<IOptionsSnapshot<TopicOptions<TResponse>>>().Get("Processors");
 
-                    var cmd = ActivatorUtilities.CreateInstance<SendTopicMessageCommand<TResponse>>(sp, Options.Create(opt));
+                    var cmd = ActivatorUtilities.CreateInstance<SendMessageCommand<TResponse>>(sp, Options.Create(opt));
 
-                    return ActivatorUtilities.CreateInstance<SendTopicMessageResponseProcessor<TRequest, TResponse>>(sp, cmd);
+                    return ActivatorUtilities.CreateInstance<SendMessageResponseProcessor<TRequest, TResponse>>(sp, cmd);
                 })
                 .AddTransient<IPipelineBehavior<TRequest, TResponse>, SendTopicMessageRequestBehavior<TRequest, TResponse>>(sp =>
                 {
                     var opt = sp.GetRequiredService<IOptionsSnapshot<TopicOptions<TRequest>>>().Get("Behaviors");
 
-                    var cmd = ActivatorUtilities.CreateInstance<SendTopicMessageCommand<TRequest>>(sp, Options.Create(opt));
+                    var cmd = ActivatorUtilities.CreateInstance<SendMessageCommand<TRequest>>(sp, Options.Create(opt));
 
                     return ActivatorUtilities.CreateInstance<SendTopicMessageRequestBehavior<TRequest, TResponse>>(sp, cmd);
                 })
-                .AddTransient<IPipelineBehavior<TRequest, TResponse>, SendTopicMessageResponseBehavior<TRequest, TResponse>>(sp =>
+                .AddTransient<IPipelineBehavior<TRequest, TResponse>, SendMessageResponseBehavior<TRequest, TResponse>>(sp =>
                 {
                     var opt = sp.GetRequiredService<IOptionsSnapshot<TopicOptions<TResponse>>>().Get("Behaviors");
 
-                    var cmd = ActivatorUtilities.CreateInstance<SendTopicMessageCommand<TResponse>>(sp, Options.Create(opt));
+                    var cmd = ActivatorUtilities.CreateInstance<SendMessageCommand<TResponse>>(sp, Options.Create(opt));
 
-                    return ActivatorUtilities.CreateInstance<SendTopicMessageResponseBehavior<TRequest, TResponse>>(sp, cmd);
+                    return ActivatorUtilities.CreateInstance<SendMessageResponseBehavior<TRequest, TResponse>>(sp, cmd);
                 })
 
                 ;
@@ -143,46 +144,46 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             switch (subscriptionName)
             {
                 case TestSubscriptions.RequestProcessor:
-                    services.AddTransient<IRequestPreProcessor<TRequest>, ReceiveSubscriptionMessageRequestProcessor<TRequest>>(sp =>
+                    services.AddTransient<IRequestPreProcessor<TRequest>, RegisterMessageHandlerRequestProcessor<TRequest>>((Func<IServiceProvider, RegisterMessageHandlerRequestProcessor<TRequest>>)(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<SubscriptionOptions<TRequest>>>().Get("Processors");
 
-                        var cmd = ActivatorUtilities.CreateInstance<ReceiveSubscriptionMessageCommand<TRequest>>(sp, Options.Create(opt));
+                        var cmd = ActivatorUtilities.CreateInstance<RegisterMessageHandlerCommand<TRequest>>(sp, Options.Create(opt));
 
-                        return ActivatorUtilities.CreateInstance<ReceiveSubscriptionMessageRequestProcessor<TRequest>>(sp, cmd);
-                    });
+                        return ActivatorUtilities.CreateInstance<RegisterMessageHandlerRequestProcessor<TRequest>>((IServiceProvider)sp, cmd);
+                    }));
                     break;
 
                 case TestSubscriptions.ResponseProcessor:
-                    services.AddTransient<IRequestPostProcessor<TRequest, TResponse>, ReceiveSubscriptionMessageResponseProcessor<TRequest, TResponse>>(sp =>
+                    services.AddTransient<IRequestPostProcessor<TRequest, TResponse>, RegisterMessageHandlerResponseProcessor<TRequest, TResponse>>((Func<IServiceProvider, RegisterMessageHandlerResponseProcessor<TRequest, TResponse>>)(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<SubscriptionOptions<TResponse>>>().Get("Processors");
 
-                        var cmd = ActivatorUtilities.CreateInstance<ReceiveSubscriptionMessageCommand<TResponse>>(sp, Options.Create(opt));
+                        var cmd = ActivatorUtilities.CreateInstance<RegisterMessageHandlerCommand<TResponse>>(sp, Options.Create(opt));
 
-                        return ActivatorUtilities.CreateInstance<ReceiveSubscriptionMessageResponseProcessor<TRequest, TResponse>>(sp, cmd);
-                    });
+                        return ActivatorUtilities.CreateInstance<RegisterMessageHandlerResponseProcessor<TRequest, TResponse>>((IServiceProvider)sp, cmd);
+                    }));
                     break;
 
                 case TestSubscriptions.RequestBehavior:
-                    services.AddTransient<IPipelineBehavior<TRequest, TResponse>, ReceiveSubscriptionMessageRequestBehavior<TRequest, TResponse>>(sp =>
+                    services.AddTransient<IPipelineBehavior<TRequest, TResponse>, RegisterMessageHandlerRequestBehavior<TRequest, TResponse>>(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<SubscriptionOptions<TRequest>>>().Get("Behaviors");
 
-                        var cmd = ActivatorUtilities.CreateInstance<ReceiveSubscriptionMessageCommand<TRequest>>(sp, Options.Create(opt));
+                        var cmd = ActivatorUtilities.CreateInstance<RegisterMessageHandlerCommand<TRequest>>(sp, Options.Create(opt));
 
-                        return ActivatorUtilities.CreateInstance<ReceiveSubscriptionMessageRequestBehavior<TRequest, TResponse>>(sp, cmd);
+                        return ActivatorUtilities.CreateInstance<RegisterMessageHandlerRequestBehavior<TRequest, TResponse>>(sp, cmd);
                     });
                     break;
 
                 case TestSubscriptions.ResponseBehavior:
-                    services.AddTransient<IPipelineBehavior<TRequest, TResponse>, ReceiveSubscriptionMessageResponseBehavior<TRequest, TResponse>>(sp =>
+                    services.AddTransient<IPipelineBehavior<TRequest, TResponse>, RegisterMessageHandlerResponseBehavior<TRequest, TResponse>>(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<SubscriptionOptions<TResponse>>>().Get("Behaviors");
 
-                        var cmd = ActivatorUtilities.CreateInstance<ReceiveSubscriptionMessageCommand<TResponse>>(sp, Options.Create(opt));
+                        var cmd = ActivatorUtilities.CreateInstance<RegisterMessageHandlerCommand<TResponse>>(sp, Options.Create(opt));
 
-                        return ActivatorUtilities.CreateInstance<ReceiveSubscriptionMessageResponseBehavior<TRequest, TResponse>>(sp, cmd);
+                        return ActivatorUtilities.CreateInstance<RegisterMessageHandlerResponseBehavior<TRequest, TResponse>>(sp, cmd);
                     });
                     break;
             }

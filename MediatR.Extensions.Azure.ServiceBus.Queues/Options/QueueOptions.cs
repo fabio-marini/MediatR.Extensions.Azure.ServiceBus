@@ -3,7 +3,7 @@ using Microsoft.Azure.ServiceBus;
 using System;
 using System.Threading.Tasks;
 
-namespace MediatR.Extensions.Azure.ServiceBus
+namespace MediatR.Extensions.Azure.ServiceBus.Queues
 {
     public class QueueOptions<TMessage>
     {

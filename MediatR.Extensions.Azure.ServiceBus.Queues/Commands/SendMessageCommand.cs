@@ -6,15 +6,15 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Extensions.Azure.ServiceBus
+namespace MediatR.Extensions.Azure.ServiceBus.Queues
 {
-    public class SendQueueMessageCommand<TMessage> : ICommand<TMessage>
+    public class SendMessageCommand<TMessage> : ICommand<TMessage>
     {
         private readonly IOptions<QueueOptions<TMessage>> opt;
         private readonly PipelineContext ctx;
         private readonly ILogger log;
 
-        public SendQueueMessageCommand(IOptions<QueueOptions<TMessage>> opt, PipelineContext ctx = null, ILogger log = null)
+        public SendMessageCommand(IOptions<QueueOptions<TMessage>> opt, PipelineContext ctx = null, ILogger log = null)
         {
             this.opt = opt;
             this.ctx = ctx;

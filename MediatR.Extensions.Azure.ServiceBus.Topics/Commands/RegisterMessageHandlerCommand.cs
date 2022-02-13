@@ -8,15 +8,15 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Extensions.Azure.ServiceBus
+namespace MediatR.Extensions.Azure.ServiceBus.Topics
 {
-    public class ReceiveSubscriptionMessageCommand<TMessage> : ICommand<TMessage>
+    public class RegisterMessageHandlerCommand<TMessage> : ICommand<TMessage>
     {
         private readonly IOptions<SubscriptionOptions<TMessage>> opt;
         private readonly PipelineContext ctx;
         private readonly ILogger log;
 
-        public ReceiveSubscriptionMessageCommand(IOptions<SubscriptionOptions<TMessage>> opt, PipelineContext ctx = null, ILogger log = null)
+        public RegisterMessageHandlerCommand(IOptions<SubscriptionOptions<TMessage>> opt, PipelineContext ctx = null, ILogger log = null)
         {
             this.opt = opt;
             this.ctx = ctx;

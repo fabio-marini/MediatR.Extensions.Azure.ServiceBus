@@ -2,7 +2,7 @@
 using Microsoft.Azure.ServiceBus;
 using System;
 
-namespace MediatR.Extensions.Azure.ServiceBus
+namespace MediatR.Extensions.Azure.ServiceBus.Topics
 {
     public class TopicOptions<TMessage>
     {
