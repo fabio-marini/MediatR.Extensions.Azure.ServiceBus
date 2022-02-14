@@ -20,18 +20,18 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
     }
 
     [Trait("TestCategory", "Integration")]
-    [TestCaseOrderer("Timeless.Testing.Xunit.TestMethodNameOrderer", "MediatR.Extensions.Azure.ServiceBus.Tests")]
+    [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
     public class QueueExtensionsTests
     {
-        // TODO: update abstractions docs with section about VS code snippets +
-        // TODO: fix options snippet - options are not named after the command!
+        // https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.servicebus.core.messagereceiver?view=azure-dotnet
+        // TODO: add project that uses message sender and receiver + test with queues/topics and sessions
 
-        // TODO: how to terminate after receiving a single message?
-        // TODO: add a receive policy that stops after receiving all messages
+        // TODO: session command and integration test
+        // TODO: schedule/cancel command (use context for enqueueTime and sequenceNumber) and integration test
 
-        // FIXME: TT Xunit extension breaks IConfig (gives GetValue doesn't exist)! :(
+        // TODO: list contoso/fabrikam examples (not integration tests)
 
-        // TODO: to receive messages from the DLQ use /$deadletterqueue path
+        // TODO: to receive messages from the DLQ use /$deadletterqueue path (also see EntityNameHelper)
 
         // TODO: add message and exception handlers as default options? Also support MessageHandlerOptions?
         // TODO: add commands unit tests + docs

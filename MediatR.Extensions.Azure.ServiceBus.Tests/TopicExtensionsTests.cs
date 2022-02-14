@@ -20,7 +20,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
     }
 
     [Trait("TestCategory", "Integration")]
-    [TestCaseOrderer("Timeless.Testing.Xunit.TestMethodNameOrderer", "MediatR.Extensions.Azure.ServiceBus.Tests")]
+    [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
     public class TopicExtensionsTests
     {
         private readonly ITestOutputHelper log;

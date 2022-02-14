@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <Authors>Fabio Marini</Authors>
+    <Description>MediatR extensions for Azure Service Bus</Description>
+    <PackageVersion>1.0.0</PackageVersion>
+    <PackageProjectUrl>https://github.com/fabio-marini/MediatR.Extensions.Azure.ServiceBus</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/fabio-marini/MediatR.Extensions.Azure.ServiceBus</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Behaviors\" />
+    <Folder Include="Commands\" />
+    <Folder Include="Processors\" />
+
+    <PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="MediatR.Extensions.Abstractions" Version="1.0.0" />
+  </ItemGroup>
+
+</Project>
