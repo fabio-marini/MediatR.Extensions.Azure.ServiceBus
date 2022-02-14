@@ -24,7 +24,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
     public class QueueExtensionsTests
     {
         // https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.servicebus.core.messagereceiver?view=azure-dotnet
-        // TODO: add project that uses message sender and receiver + test with queues/topics and sessions
+        // TODO: test core project with queues/topics and sessions
 
         // TODO: session command and integration test
         // TODO: schedule/cancel command (use context for enqueueTime and sequenceNumber) and integration test

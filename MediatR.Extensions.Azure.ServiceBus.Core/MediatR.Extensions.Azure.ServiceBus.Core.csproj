@@ -10,9 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Behaviors\" />
-    <Folder Include="Commands\" />
-    <Folder Include="Processors\" />
 
     <PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
