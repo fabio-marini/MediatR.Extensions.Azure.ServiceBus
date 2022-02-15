@@ -32,7 +32,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
             if (opt.Value.MessageSender == null)
             {
-                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Receiver");
+                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
 
             if (opt.Value.Message == null)
@@ -42,8 +42,14 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
             var messageSender = opt.Value.MessageSender(message, ctx);
 
+            if (messageSender == null)
+            {
+                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
+            }
+
             try
             {
+
                 await messageSender.SendAsync(opt.Value.Message(message, ctx));
 
                 await messageSender.CloseAsync();

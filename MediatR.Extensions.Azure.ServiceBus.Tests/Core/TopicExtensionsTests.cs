@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Microsoft.Azure.ServiceBus;
+using Microsoft.Azure.ServiceBus.Core;
 using Microsoft.Azure.ServiceBus.Management;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,16 +10,8 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MediatR.Extensions.Azure.ServiceBus.Tests
+namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
 {
-    public class TestSubscriptions
-    {
-        public const string RequestProcessor = "request-processor";
-        public const string ResponseProcessor = "response-processor";
-        public const string RequestBehavior = "request-behavior";
-        public const string ResponseBehavior = "response-behavior";
-    }
-
     [Trait("TestCategory", "Integration"), Collection("TopicTests")]
     [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
     public class TopicExtensionsTests
@@ -58,10 +51,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddTransient<TopicClient>(sp => new TopicClient(connectionString, topicPath))
+                .AddTransient<MessageSender>(sp => new MessageSender(connectionString, topicPath))
                 .AddTransient<ITestOutputHelper>(sp => log)
-                .AddTopicOptions<EchoRequest, EchoResponse>()
-                .AddSendTopicMessageExtensions<EchoRequest, EchoResponse>()
+                .AddMessageOptions<EchoRequest, EchoResponse>()
+                .AddSendMessageExtensions<EchoRequest, EchoResponse>()
 
                 .BuildServiceProvider();
 
@@ -78,13 +71,15 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         [Theory(DisplayName = "Receive extensions are executed"), MemberData(nameof(SubscriptionNames))]
         public async Task Step04(string subscriptionName)
         {
+            var entityPath = EntityNameHelper.FormatSubscriptionPath(topicPath, subscriptionName);
+
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddTransient<SubscriptionClient>(sp => new SubscriptionClient(connectionString, topicPath, subscriptionName))
+                .AddTransient<MessageReceiver>(sp => new MessageReceiver(connectionString, entityPath, ReceiveMode.ReceiveAndDelete))
                 .AddTransient<ITestOutputHelper>(sp => log)
-                .AddSubscriptionOptions<EchoRequest, EchoResponse>()
-                .AddReceiveSubscriptionMessageExtensions<EchoRequest, EchoResponse>(subscriptionName)
+                .AddMessageOptions<EchoRequest, EchoResponse>()
+                .AddReceiveMessageExtensions<EchoRequest, EchoResponse>(subscriptionName)
 
                 .BuildServiceProvider();
 

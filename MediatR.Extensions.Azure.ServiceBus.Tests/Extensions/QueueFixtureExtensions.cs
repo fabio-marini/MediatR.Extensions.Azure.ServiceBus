@@ -1,5 +1,4 @@
-﻿using MediatR.Extensions.Azure.ServiceBus.Queues;
-using MediatR.Pipeline;
+﻿using MediatR.Pipeline;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -9,6 +8,8 @@ using System.Text;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
+    using MediatR.Extensions.Azure.ServiceBus.Queues;
+
     public static class QueueFixtureExtensions
     {
         public static IServiceCollection AddQueueOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
@@ -74,13 +75,13 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
                     return ActivatorUtilities.CreateInstance<SendMessageResponseProcessor<TRequest, TResponse>>(sp, cmd);
                 })
-                .AddTransient<IPipelineBehavior<TRequest, TResponse>, SendQueueMessageRequestBehavior<TRequest, TResponse>>(sp =>
+                .AddTransient<IPipelineBehavior<TRequest, TResponse>, SendMessageRequestBehavior<TRequest, TResponse>>(sp =>
                 {
                     var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TRequest>>>().Get("Behaviors");
 
                     var cmd = ActivatorUtilities.CreateInstance<SendMessageCommand<TRequest>>(sp, Options.Create(opt));
 
-                    return ActivatorUtilities.CreateInstance<SendQueueMessageRequestBehavior<TRequest, TResponse>>(sp, cmd);
+                    return ActivatorUtilities.CreateInstance<SendMessageRequestBehavior<TRequest, TResponse>>(sp, cmd);
                 })
                 .AddTransient<IPipelineBehavior<TRequest, TResponse>, SendMessageResponseBehavior<TRequest, TResponse>>(sp =>
                 {

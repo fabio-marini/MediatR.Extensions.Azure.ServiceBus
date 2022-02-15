@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Queues
 {
-    public class SendMessageRequestBehavior<TRequest> : SendQueueMessageRequestBehavior<TRequest, Unit> where TRequest : IRequest<Unit>
+    public class SendMessageRequestBehavior<TRequest> : SendMessageRequestBehavior<TRequest, Unit> where TRequest : IRequest<Unit>
     {
         public SendMessageRequestBehavior(SendMessageCommand<TRequest> cmd, PipelineContext ctx = null, ILogger log = null)
             : base(cmd, ctx, log)
@@ -11,9 +11,9 @@ namespace MediatR.Extensions.Azure.ServiceBus.Queues
         }
     }
 
-    public class SendQueueMessageRequestBehavior<TRequest, TResponse> : RequestBehaviorBase<TRequest, TResponse> where TRequest : IRequest<TResponse>
+    public class SendMessageRequestBehavior<TRequest, TResponse> : RequestBehaviorBase<TRequest, TResponse> where TRequest : IRequest<TResponse>
     {
-        public SendQueueMessageRequestBehavior(SendMessageCommand<TRequest> cmd, PipelineContext ctx = null, ILogger log = null)
+        public SendMessageRequestBehavior(SendMessageCommand<TRequest> cmd, PipelineContext ctx = null, ILogger log = null)
             : base(cmd, ctx, log)
         {
         }

@@ -37,6 +37,11 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
             var messageReceiver = opt.Value.MessageReceiver(message, ctx);
 
+            if (messageReceiver == null)
+            {
+                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Receiver");
+            }
+            
             try
             {
                 var msg = await messageReceiver.ReceiveAsync();

@@ -1,5 +1,4 @@
-﻿using MediatR.Extensions.Azure.ServiceBus.Topics;
-using MediatR.Pipeline;
+﻿using MediatR.Pipeline;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -9,6 +8,8 @@ using System.Text;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
+    using MediatR.Extensions.Azure.ServiceBus.Topics;
+
     public static class TopicFixtureExtensions
     {
         public static IServiceCollection AddTopicOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
@@ -20,7 +21,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 {
                     opt.IsEnabled = true;
                     opt.TopicClient = (req, ctx) => svc.GetRequiredService<TopicClient>();
-                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
+                    {
+                        CorrelationId = TestSubscriptions.RequestProcessor
+                    };
                 })
                 .Services
 
@@ -29,7 +33,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 {
                     opt.IsEnabled = true;
                     opt.TopicClient = (req, ctx) => svc.GetRequiredService<TopicClient>();
-                    opt.Message = (res, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(res)));
+                    opt.Message = (res, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(res))) 
+                    { 
+                        CorrelationId = TestSubscriptions.ResponseProcessor 
+                    };
                 })
                 .Services
 
@@ -38,7 +45,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 {
                     opt.IsEnabled = true;
                     opt.TopicClient = (req, ctx) => svc.GetRequiredService<TopicClient>();
-                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
+                    {
+                        CorrelationId = TestSubscriptions.RequestBehavior
+                    };
                 })
                 .Services
 
@@ -47,7 +57,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 {
                     opt.IsEnabled = true;
                     opt.TopicClient = (req, ctx) => svc.GetRequiredService<TopicClient>();
-                    opt.Message = (res, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(res)));
+                    opt.Message = (res, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(res)))
+                    {
+                        CorrelationId = TestSubscriptions.ResponseBehavior
+                    };
                 })
                 .Services
 
