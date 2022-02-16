@@ -110,7 +110,47 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 ;
         }
 
-        public static IServiceCollection AddReceiveMessageExtensions<TRequest, TResponse>(this IServiceCollection services, string queuePath) where TRequest : IRequest<TResponse>
+        public static IServiceCollection AddCancelMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        {
+            return services
+
+                .AddTransient<IRequestPreProcessor<TRequest>, CancelMessageRequestProcessor<TRequest>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<MessageOptions<TRequest>>>().Get("Processors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<CancelMessageCommand<TRequest>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<CancelMessageRequestProcessor<TRequest>>(sp, cmd);
+                })
+                .AddTransient<IRequestPostProcessor<TRequest, TResponse>, CancelMessageResponseProcessor<TRequest, TResponse>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<MessageOptions<TResponse>>>().Get("Processors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<CancelMessageCommand<TResponse>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<CancelMessageResponseProcessor<TRequest, TResponse>>(sp, cmd);
+                })
+                .AddTransient<IPipelineBehavior<TRequest, TResponse>, CancelMessageRequestBehavior<TRequest, TResponse>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<MessageOptions<TRequest>>>().Get("Behaviors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<CancelMessageCommand<TRequest>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<CancelMessageRequestBehavior<TRequest, TResponse>>(sp, cmd);
+                })
+                .AddTransient<IPipelineBehavior<TRequest, TResponse>, CancelMessageResponseBehavior<TRequest, TResponse>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<MessageOptions<TResponse>>>().Get("Behaviors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<CancelMessageCommand<TResponse>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<CancelMessageResponseBehavior<TRequest, TResponse>>(sp, cmd);
+                })
+
+                ;
+        }
+
+        public static IServiceCollection AddReceiveMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
         {
             return services
 

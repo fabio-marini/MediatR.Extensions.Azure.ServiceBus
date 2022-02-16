@@ -9,13 +9,13 @@ using System.Threading.Tasks;
 
 namespace MediatR.Extensions.Azure.ServiceBus
 {
-    public class SendMessageCommand<TMessage> : ICommand<TMessage>
+    public class CancelMessageCommand<TMessage> : ICommand<TMessage>
     {
         private readonly IOptions<MessageOptions<TMessage>> opt;
         private readonly PipelineContext ctx;
         private readonly ILogger log;
 
-        public SendMessageCommand(IOptions<MessageOptions<TMessage>> opt, PipelineContext ctx = null, ILogger log = null)
+        public CancelMessageCommand(IOptions<MessageOptions<TMessage>> opt, PipelineContext ctx = null, ILogger log = null)
         {
             this.opt = opt;
             this.ctx = ctx;
@@ -38,11 +38,6 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
 
-            if (opt.Value.Message == null)
-            {
-                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Message");
-            }
-
             var messageSender = opt.Value.MessageSender(message, ctx);
 
             if (messageSender == null)
@@ -50,31 +45,20 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
 
+            if (ctx == null || ctx.ContainsKey(ContextKeys.SequenceNumbers) == false)
+            {
+                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Context");
+            }
+
             try
             {
-                if (ctx != null && ctx.ContainsKey(ContextKeys.EnqueueTimeUtc))
-                {
-                    var enqueueTimeUtc = (DateTimeOffset)ctx[ContextKeys.EnqueueTimeUtc];
+                var sequenceNumbers = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
 
-                    var sequenceNumber = await messageSender.ScheduleMessageAsync(opt.Value.Message(message, ctx), enqueueTimeUtc);
+                var sequenceNumber = sequenceNumbers.Dequeue();
 
-                    log.LogInformation("Scheduled message {Id}", sequenceNumber);
+                log.LogInformation("Cancelling message {Id}", sequenceNumber);
 
-                    if (ctx.ContainsKey(ContextKeys.SequenceNumbers) == false)
-                    {
-                        ctx.Add(ContextKeys.SequenceNumbers, new Queue<long>());
-                    }
-
-                    var sequenceNumbers = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
-
-                    sequenceNumbers.Enqueue(sequenceNumber);
-                }
-                else
-                {
-                    await messageSender.SendAsync(opt.Value.Message(message, ctx));
-                }
-
-                await messageSender.CloseAsync();
+                await messageSender.CancelScheduledMessageAsync(sequenceNumber);
 
                 log.LogDebug("Command {Command} completed", this.GetType().Name);
             }
@@ -84,8 +68,6 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
                 throw new CommandException($"Command {this.GetType().Name} failed, see inner exception for details", ex);
             }
-
-            await messageSender.CloseAsync();
         }
     }
 }
