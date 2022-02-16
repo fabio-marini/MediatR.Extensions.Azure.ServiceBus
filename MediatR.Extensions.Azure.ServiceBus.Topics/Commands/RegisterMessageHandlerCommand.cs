@@ -23,7 +23,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Topics
             this.log = log ?? NullLogger.Instance;
         }
 
-        public virtual Task ExecuteAsync(TMessage message, CancellationToken cancellationToken)
+        public virtual async Task ExecuteAsync(TMessage message, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -31,7 +31,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Topics
             {
                 log.LogDebug("Command {Command} is not enabled, returning", this.GetType().Name);
 
-                return Task.CompletedTask;
+                return;
             }
 
             if (opt.Value.SubscriptionClient == null)
@@ -56,10 +56,12 @@ namespace MediatR.Extensions.Azure.ServiceBus.Topics
                 return Task.CompletedTask;
             });
 
-            opt.Value.SubscriptionClient(message, ctx).RegisterMessageHandler(messageHandler, exceptionHandler);
+            var subscriptionClient = opt.Value.SubscriptionClient(message, ctx);
 
             try
             {
+                subscriptionClient.RegisterMessageHandler(messageHandler, exceptionHandler);
+
                 var receivePolicy = Policy
                     .HandleResult<CancellationToken>(tkn => tkn.IsCancellationRequested == false)
                     .WaitAndRetryForever(i => TimeSpan.FromMilliseconds(500));
@@ -79,8 +81,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Topics
 
                 throw new CommandException($"Command {this.GetType().Name} failed, see inner exception for details", ex);
             }
-
-            return Task.CompletedTask;
+            finally
+            {
+                await subscriptionClient.UnregisterMessageHandlerAsync(TimeSpan.FromMilliseconds(100));
+            }
         }
     }
 }

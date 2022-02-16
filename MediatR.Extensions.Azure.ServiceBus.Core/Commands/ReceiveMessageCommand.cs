@@ -28,6 +28,8 @@ namespace MediatR.Extensions.Azure.ServiceBus
             if (opt.Value.IsEnabled == false)
             {
                 log.LogDebug("Command {Command} is not enabled, returning", this.GetType().Name);
+
+                return;
             }
 
             if (opt.Value.MessageReceiver == null)

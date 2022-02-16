@@ -101,7 +101,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             // cancellation token and when the next 3 start they will be cancelled straight away...
             switch (queuePath)
             {
-                case TestQueues.RequestProcessor:
+                case TestEntities.RequestProcessor:
                     services.AddTransient<IRequestPreProcessor<TRequest>, RegisterMessageHandlerRequestProcessor<TRequest>>(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TRequest>>>().Get("Processors");
@@ -112,7 +112,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     });
                     break;
 
-                case TestQueues.ResponseProcessor:
+                case TestEntities.ResponseProcessor:
                     services.AddTransient<IRequestPostProcessor<TRequest, TResponse>, RegisterMessageHandlerResponseProcessor<TRequest, TResponse>>(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TResponse>>>().Get("Processors");
@@ -123,7 +123,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     });
                     break;
 
-                case TestQueues.RequestBehavior:
+                case TestEntities.RequestBehavior:
                     services.AddTransient<IPipelineBehavior<TRequest, TResponse>, RegisterMessageHandlerRequestBehavior<TRequest, TResponse>>(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TRequest>>>().Get("Behaviors");
@@ -134,7 +134,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     });
                     break;
 
-                case TestQueues.ResponseBehavior:
+                case TestEntities.ResponseBehavior:
                     services.AddTransient<IPipelineBehavior<TRequest, TResponse>, RegisterMessageHandlerResponseBehavior<TRequest, TResponse>>(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<QueueOptions<TResponse>>>().Get("Behaviors");

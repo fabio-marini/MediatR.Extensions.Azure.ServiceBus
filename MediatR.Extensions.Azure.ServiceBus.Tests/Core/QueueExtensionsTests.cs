@@ -1,9 +1,11 @@
 ﻿using FluentAssertions;
+using MediatR.Extensions.Azure.Storage.Examples;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Core;
 using Microsoft.Azure.ServiceBus.Management;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
@@ -33,10 +35,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
 
         public static IEnumerable<object[]> QueueNames()
         {
-            yield return new object[] { TestQueues.RequestProcessor };
-            yield return new object[] { TestQueues.ResponseProcessor };
-            yield return new object[] { TestQueues.RequestBehavior };
-            yield return new object[] { TestQueues.ResponseBehavior };
+            yield return new object[] { TestEntities.RequestProcessor };
+            yield return new object[] { TestEntities.ResponseProcessor };
+            yield return new object[] { TestEntities.RequestBehavior };
+            yield return new object[] { TestEntities.ResponseBehavior };
         }
 
         [Theory(DisplayName = "Queues are recreated"), MemberData(nameof(QueueNames))]
@@ -50,6 +52,11 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
                 .AddMediatR(this.GetType())
                 .AddTransient<MessageSender>(sp => new MessageSender(connectionString, queuePath))
                 .AddTransient<ITestOutputHelper>(sp => log)
+                .AddTransient<ILogger, TestOutputLogger>()
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
+                {
+                    MinimumLogLevel = LogLevel.Debug
+                })
                 .AddMessageOptions<EchoRequest, EchoResponse>()
                 .AddSendMessageExtensions<EchoRequest, EchoResponse>()
 
@@ -73,6 +80,11 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
                 .AddMediatR(this.GetType())
                 .AddTransient<MessageReceiver>(sp => new MessageReceiver(connectionString, queuePath, ReceiveMode.ReceiveAndDelete))
                 .AddTransient<ITestOutputHelper>(sp => log)
+                .AddTransient<ILogger, TestOutputLogger>()
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
+                {
+                    MinimumLogLevel = LogLevel.Debug
+                })
                 .AddMessageOptions<EchoRequest, EchoResponse>()
                 .AddReceiveMessageExtensions<EchoRequest, EchoResponse>(queuePath)
 

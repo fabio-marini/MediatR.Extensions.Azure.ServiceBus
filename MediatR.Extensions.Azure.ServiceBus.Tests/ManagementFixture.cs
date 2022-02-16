@@ -1,6 +1,8 @@
 ﻿using FluentAssertions;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Management;
+using Polly;
+using System;
 using System.Threading.Tasks;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
@@ -36,9 +38,17 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
         public async Task QueueHasMessages(string queuePath, int expectedCount)
         {
-            var runtimeInfo = await managementClient.GetQueueRuntimeInfoAsync(queuePath);
+            var retryPolicy = Policy.HandleResult<long>(res => res != expectedCount)
+                .WaitAndRetryAsync(5, x => TimeSpan.FromMilliseconds(500));
 
-            runtimeInfo.MessageCount.Should().Be(expectedCount);
+            var messageCount = await retryPolicy.ExecuteAsync(async () =>
+            {
+                var runtimeInfo = await managementClient.GetQueueRuntimeInfoAsync(queuePath);
+
+                return runtimeInfo.MessageCount;
+            });
+
+            messageCount.Should().Be(expectedCount);
         }
 
         public async Task TopicIsRecreated(string topicPath, string subscriptionName)
@@ -65,9 +75,17 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
         public async Task SubscriptionHasMessages(string topicPath, string subscriptionName, int expectedCount)
         {
-            var runtimeInfo = await managementClient.GetSubscriptionRuntimeInfoAsync(topicPath, subscriptionName);
+            var retryPolicy = Policy.HandleResult<long>(res => res != expectedCount)
+                .WaitAndRetryAsync(5, x => TimeSpan.FromMilliseconds(500));
 
-            runtimeInfo.MessageCount.Should().Be(expectedCount);
+            var messageCount = await retryPolicy.ExecuteAsync(async () =>
+            {
+                var runtimeInfo = await managementClient.GetSubscriptionRuntimeInfoAsync(topicPath, subscriptionName);
+
+                return runtimeInfo.MessageCount;
+            });
+
+            messageCount.Should().Be(expectedCount);
         }
     }
 }

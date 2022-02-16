@@ -16,55 +16,55 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             return services
 
                 .AddOptions<MessageOptions<TRequest>>("Processors")
-                .Configure<IServiceProvider>((opt, svc) =>
+                .Configure<IServiceProvider>((Action<MessageOptions<TRequest>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
                     opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<MessageReceiver>();
                     opt.MessageSender = (req, ctx) => svc.GetRequiredService<MessageSender>();
                     opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
                     {
-                        CorrelationId = TestSubscriptions.RequestProcessor
+                        CorrelationId = TestEntities.RequestProcessor
                     };
-                })
+                }))
                 .Services
 
                 .AddOptions<MessageOptions<TResponse>>("Processors")
-                .Configure<IServiceProvider>((opt, svc) =>
+                .Configure<IServiceProvider>((Action<MessageOptions<TResponse>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
                     opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<MessageReceiver>();
                     opt.MessageSender = (req, ctx) => svc.GetRequiredService<MessageSender>();
                     opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
                     {
-                        CorrelationId = TestSubscriptions.ResponseProcessor
+                        CorrelationId = TestEntities.ResponseProcessor
                     };
-                })
+                }))
                 .Services
 
                 .AddOptions<MessageOptions<TRequest>>("Behaviors")
-                .Configure<IServiceProvider>((opt, svc) =>
+                .Configure<IServiceProvider>((Action<MessageOptions<TRequest>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
                     opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<MessageReceiver>();
                     opt.MessageSender = (req, ctx) => svc.GetRequiredService<MessageSender>();
                     opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
                     {
-                        CorrelationId = TestSubscriptions.RequestBehavior
+                        CorrelationId = TestEntities.RequestBehavior
                     };
-                })
+                }))
                 .Services
 
                 .AddOptions<MessageOptions<TResponse>>("Behaviors")
-                .Configure<IServiceProvider>((opt, svc) =>
+                .Configure<IServiceProvider>((Action<MessageOptions<TResponse>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
                     opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<MessageReceiver>();
                     opt.MessageSender = (req, ctx) => svc.GetRequiredService<MessageSender>();
                     opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
                     {
-                        CorrelationId = TestSubscriptions.ResponseBehavior
+                        CorrelationId = TestEntities.ResponseBehavior
                     };
-                })
+                }))
                 .Services
 
                 ;

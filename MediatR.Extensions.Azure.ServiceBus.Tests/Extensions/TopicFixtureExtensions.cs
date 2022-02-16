@@ -17,51 +17,51 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             return services
 
                 .AddOptions<TopicOptions<TRequest>>("Processors")
-                .Configure<IServiceProvider>((opt, svc) =>
+                .Configure<IServiceProvider>((Action<TopicOptions<TRequest>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
                     opt.TopicClient = (req, ctx) => svc.GetRequiredService<TopicClient>();
                     opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
                     {
-                        CorrelationId = TestSubscriptions.RequestProcessor
+                        CorrelationId = TestEntities.RequestProcessor
                     };
-                })
+                }))
                 .Services
 
                 .AddOptions<TopicOptions<TResponse>>("Processors")
-                .Configure<IServiceProvider>((opt, svc) =>
+                .Configure<IServiceProvider>((Action<TopicOptions<TResponse>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
                     opt.TopicClient = (req, ctx) => svc.GetRequiredService<TopicClient>();
                     opt.Message = (res, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(res))) 
                     { 
-                        CorrelationId = TestSubscriptions.ResponseProcessor 
+                        CorrelationId = TestEntities.ResponseProcessor 
                     };
-                })
+                }))
                 .Services
 
                 .AddOptions<TopicOptions<TRequest>>("Behaviors")
-                .Configure<IServiceProvider>((opt, svc) =>
+                .Configure<IServiceProvider>((Action<TopicOptions<TRequest>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
                     opt.TopicClient = (req, ctx) => svc.GetRequiredService<TopicClient>();
                     opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
                     {
-                        CorrelationId = TestSubscriptions.RequestBehavior
+                        CorrelationId = TestEntities.RequestBehavior
                     };
-                })
+                }))
                 .Services
 
                 .AddOptions<TopicOptions<TResponse>>("Behaviors")
-                .Configure<IServiceProvider>((opt, svc) =>
+                .Configure<IServiceProvider>((Action<TopicOptions<TResponse>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
                     opt.TopicClient = (req, ctx) => svc.GetRequiredService<TopicClient>();
                     opt.Message = (res, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(res)))
                     {
-                        CorrelationId = TestSubscriptions.ResponseBehavior
+                        CorrelationId = TestEntities.ResponseBehavior
                     };
-                })
+                }))
                 .Services
 
                 ;
@@ -130,13 +130,13 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
                     return ActivatorUtilities.CreateInstance<SendMessageResponseProcessor<TRequest, TResponse>>(sp, cmd);
                 })
-                .AddTransient<IPipelineBehavior<TRequest, TResponse>, SendTopicMessageRequestBehavior<TRequest, TResponse>>(sp =>
+                .AddTransient<IPipelineBehavior<TRequest, TResponse>, SendMessageRequestBehavior<TRequest, TResponse>>(sp =>
                 {
                     var opt = sp.GetRequiredService<IOptionsSnapshot<TopicOptions<TRequest>>>().Get("Behaviors");
 
                     var cmd = ActivatorUtilities.CreateInstance<SendMessageCommand<TRequest>>(sp, Options.Create(opt));
 
-                    return ActivatorUtilities.CreateInstance<SendTopicMessageRequestBehavior<TRequest, TResponse>>(sp, cmd);
+                    return ActivatorUtilities.CreateInstance<SendMessageRequestBehavior<TRequest, TResponse>>(sp, cmd);
                 })
                 .AddTransient<IPipelineBehavior<TRequest, TResponse>, SendMessageResponseBehavior<TRequest, TResponse>>(sp =>
                 {
@@ -156,7 +156,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             // cancellation token and when the next 3 start they will be cancelled straight away...
             switch (subscriptionName)
             {
-                case TestSubscriptions.RequestProcessor:
+                case TestEntities.RequestProcessor:
                     services.AddTransient<IRequestPreProcessor<TRequest>, RegisterMessageHandlerRequestProcessor<TRequest>>((Func<IServiceProvider, RegisterMessageHandlerRequestProcessor<TRequest>>)(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<SubscriptionOptions<TRequest>>>().Get("Processors");
@@ -167,7 +167,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     }));
                     break;
 
-                case TestSubscriptions.ResponseProcessor:
+                case TestEntities.ResponseProcessor:
                     services.AddTransient<IRequestPostProcessor<TRequest, TResponse>, RegisterMessageHandlerResponseProcessor<TRequest, TResponse>>((Func<IServiceProvider, RegisterMessageHandlerResponseProcessor<TRequest, TResponse>>)(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<SubscriptionOptions<TResponse>>>().Get("Processors");
@@ -178,7 +178,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     }));
                     break;
 
-                case TestSubscriptions.RequestBehavior:
+                case TestEntities.RequestBehavior:
                     services.AddTransient<IPipelineBehavior<TRequest, TResponse>, RegisterMessageHandlerRequestBehavior<TRequest, TResponse>>(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<SubscriptionOptions<TRequest>>>().Get("Behaviors");
@@ -189,7 +189,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     });
                     break;
 
-                case TestSubscriptions.ResponseBehavior:
+                case TestEntities.ResponseBehavior:
                     services.AddTransient<IPipelineBehavior<TRequest, TResponse>, RegisterMessageHandlerResponseBehavior<TRequest, TResponse>>(sp =>
                     {
                         var opt = sp.GetRequiredService<IOptionsSnapshot<SubscriptionOptions<TResponse>>>().Get("Behaviors");

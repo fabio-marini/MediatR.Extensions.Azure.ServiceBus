@@ -1,8 +1,10 @@
 ﻿using FluentAssertions;
+using MediatR.Extensions.Azure.Storage.Examples;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Management;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,14 +13,6 @@ using Xunit.Abstractions;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
-    public class TestSubscriptions
-    {
-        public const string RequestProcessor = "request-processor";
-        public const string ResponseProcessor = "response-processor";
-        public const string RequestBehavior = "request-behavior";
-        public const string ResponseBehavior = "response-behavior";
-    }
-
     [Trait("TestCategory", "Integration"), Collection("TopicTests")]
     [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
     public class TopicExtensionsTests
@@ -43,10 +37,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
         public static IEnumerable<object[]> SubscriptionNames()
         {
-            yield return new object[] { TestSubscriptions.RequestProcessor };
-            yield return new object[] { TestSubscriptions.ResponseProcessor };
-            yield return new object[] { TestSubscriptions.RequestBehavior };
-            yield return new object[] { TestSubscriptions.ResponseBehavior };
+            yield return new object[] { TestEntities.RequestProcessor };
+            yield return new object[] { TestEntities.ResponseProcessor };
+            yield return new object[] { TestEntities.RequestBehavior };
+            yield return new object[] { TestEntities.ResponseBehavior };
         }
 
         [Theory(DisplayName = "Topic and subscriptions are recreated"), MemberData(nameof(SubscriptionNames))]
@@ -60,6 +54,11 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .AddMediatR(this.GetType())
                 .AddTransient<TopicClient>(sp => new TopicClient(connectionString, topicPath))
                 .AddTransient<ITestOutputHelper>(sp => log)
+                .AddTransient<ILogger, TestOutputLogger>()
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
+                {
+                    MinimumLogLevel = LogLevel.Debug
+                })
                 .AddTopicOptions<EchoRequest, EchoResponse>()
                 .AddSendTopicMessageExtensions<EchoRequest, EchoResponse>()
 
@@ -83,6 +82,11 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .AddMediatR(this.GetType())
                 .AddTransient<SubscriptionClient>(sp => new SubscriptionClient(connectionString, topicPath, subscriptionName))
                 .AddTransient<ITestOutputHelper>(sp => log)
+                .AddTransient<ILogger, TestOutputLogger>()
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
+                {
+                    MinimumLogLevel = LogLevel.Debug
+                })
                 .AddSubscriptionOptions<EchoRequest, EchoResponse>()
                 .AddReceiveSubscriptionMessageExtensions<EchoRequest, EchoResponse>(subscriptionName)
 
