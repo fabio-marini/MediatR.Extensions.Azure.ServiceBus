@@ -13,38 +13,27 @@ using Xunit.Abstractions;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
-    [Trait("TestCategory", "Integration"), Collection("QueueTests")]
+    [Trait("TestCategory", "Integration"), Collection("TopicTests")]
     [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
-    public class QueueExtensionsTests
+    public class TopicExtensionsTests
     {
-        // TODO: can refactor all theories to be facts and use a single entity? 
-
-        // TODO: implement session
-        // TODO: commands unit tests + docs
-
-        // TODO: list contoso/fabrikam examples (not integration tests, see EntityNameHelper for DLQ)
-
-        // TODO: update storage test fixtures so tables/containers are deleted on dispose?
-        // FIXME: BlobClient is a delegate, but AS table and queue clients are instances - what should SB topic and queue clients be?!?
-        // TODO: confirm core doesn't support: sessions, manual complete
-
         private readonly ITestOutputHelper log;
+        private readonly IConfiguration cfg;
 
         private readonly string connectionString;
         private readonly ManagementFixture managementFixture;
 
-        public QueueExtensionsTests(ITestOutputHelper log)
+        public TopicExtensionsTests(ITestOutputHelper log)
         {
             this.log = log;
-
-            var cfg = new ConfigurationBuilder().AddUserSecrets(this.GetType().Assembly).Build();
+            this.cfg = new ConfigurationBuilder().AddUserSecrets(this.GetType().Assembly).Build();
 
             connectionString = cfg.GetValue<string>("AzureWebJobsServiceBus");
 
             managementFixture = new ManagementFixture(new ManagementClient(connectionString));
         }
 
-        public static IEnumerable<object[]> QueueNames()
+        public static IEnumerable<object[]> SubscriptionNames()
         {
             yield return new object[] { TestEntities.RequestProcessor };
             yield return new object[] { TestEntities.ResponseProcessor };
@@ -52,24 +41,24 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             yield return new object[] { TestEntities.ResponseBehavior };
         }
 
-        [Theory(DisplayName = "Queues are recreated"), MemberData(nameof(QueueNames))]
-        public async Task Step01(string queuePath) => await managementFixture.QueueIsRecreated(queuePath);
+        [Theory(DisplayName = "Topic and subscriptions are recreated"), MemberData(nameof(SubscriptionNames))]
+        public async Task Step01(string subscriptionName) => await managementFixture.TopicIsRecreated(TestEntities.TopicPath, subscriptionName);
 
-        [Theory(DisplayName = "Send extensions are executed"), MemberData(nameof(QueueNames))]
-        public async Task Step02(string queuePath)
+        [Theory(DisplayName = "Send extensions are executed"), MemberData(nameof(SubscriptionNames))]
+        public async Task Step02(string subscriptionName)
         {
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddTransient<QueueClient>(sp => new QueueClient(connectionString, queuePath))
+                .AddTransient<TopicClient>(sp => new TopicClient(connectionString, TestEntities.TopicPath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
                 .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
                 {
                     MinimumLogLevel = LogLevel.Debug
                 })
-                .AddQueueOptions<EchoRequest, EchoResponse>()
-                .AddSendQueueMessageExtensions<EchoRequest, EchoResponse>()
+                .AddTopicOptions<EchoRequest, EchoResponse>()
+                .AddSendTopicMessageExtensions<EchoRequest, EchoResponse>()
 
                 .BuildServiceProvider();
 
@@ -80,24 +69,24 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             res.Message.Should().Be(EchoRequest.Default.Message);
         }
 
-        [Theory(DisplayName = "Queues have messages"), MemberData(nameof(QueueNames))]
-        public async Task Step03(string queuePath) => await managementFixture.QueueHasMessages(queuePath, 4);
+        [Theory(DisplayName = "Subscriptions have messages"), MemberData(nameof(SubscriptionNames))]
+        public async Task Step03(string subscriptionName) => await managementFixture.SubscriptionHasMessages(TestEntities.TopicPath, subscriptionName, 4);
 
-        [Theory(DisplayName = "Receive extensions are executed"), MemberData(nameof(QueueNames))]
-        public async Task Step04(string queuePath)
+        [Theory(DisplayName = "Receive extensions are executed"), MemberData(nameof(SubscriptionNames))]
+        public async Task Step04(string subscriptionName)
         {
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddTransient<QueueClient>(sp => new QueueClient(connectionString, queuePath))
+                .AddTransient<SubscriptionClient>(sp => new SubscriptionClient(connectionString, TestEntities.TopicPath, subscriptionName))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
                 .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
                 {
                     MinimumLogLevel = LogLevel.Debug
                 })
-                .AddQueueOptions<EchoRequest, EchoResponse>()
-                .AddReceiveQueueMessageExtensions<EchoRequest, EchoResponse>(queuePath)
+                .AddSubscriptionOptions<EchoRequest, EchoResponse>()
+                .AddReceiveSubscriptionMessageExtensions<EchoRequest, EchoResponse>(subscriptionName)
 
                 .BuildServiceProvider();
 
@@ -110,7 +99,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             res.Message.Should().Be(EchoRequest.Default.Message);
         }
 
-        [Theory(DisplayName = "Queues have messages"), MemberData(nameof(QueueNames))]
-        public async Task Step05(string queuePath) => await managementFixture.QueueHasMessages(queuePath, 0);
+        [Theory(DisplayName = "Subscriptions have messages"), MemberData(nameof(SubscriptionNames))]
+        public async Task Step05(string subscriptionName) => await managementFixture.SubscriptionHasMessages(TestEntities.TopicPath, subscriptionName, 0);
     }
 }

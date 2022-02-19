@@ -19,17 +19,14 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
     public class TopicExtensionsTests
     {
         private readonly ITestOutputHelper log;
-        private readonly IConfiguration cfg;
-
         private readonly string connectionString;
         private readonly ManagementFixture managementFixture;
-
-        private const string topicPath = "mediator-topic";
 
         public TopicExtensionsTests(ITestOutputHelper log)
         {
             this.log = log;
-            this.cfg = new ConfigurationBuilder().AddUserSecrets(this.GetType().Assembly).Build();
+
+            var cfg = new ConfigurationBuilder().AddUserSecrets(this.GetType().Assembly).Build();
 
             connectionString = cfg.GetValue<string>("AzureWebJobsServiceBus");
 
@@ -45,7 +42,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
         }
 
         [Theory(DisplayName = "Topic and subscriptions are recreated"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step01(string subscriptionName) => await managementFixture.TopicIsRecreated(topicPath, subscriptionName);
+        public async Task Step01(string subscriptionName) => await managementFixture.TopicIsRecreated(TestEntities.TopicPath, subscriptionName);
 
         [Theory(DisplayName = "Send extensions are executed"), MemberData(nameof(SubscriptionNames))]
         public async Task Step02(string subscriptionName)
@@ -53,7 +50,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddTransient<MessageSender>(sp => new MessageSender(connectionString, topicPath))
+                .AddTransient<MessageSender>(sp => new MessageSender(connectionString, TestEntities.TopicPath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
                 .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
@@ -73,12 +70,12 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
         }
 
         [Theory(DisplayName = "Subscriptions have messages"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step03(string subscriptionName) => await managementFixture.SubscriptionHasMessages(topicPath, subscriptionName, 4);
+        public async Task Step03(string subscriptionName) => await managementFixture.SubscriptionHasMessages(TestEntities.TopicPath, subscriptionName, 4);
 
         [Theory(DisplayName = "Receive extensions are executed"), MemberData(nameof(SubscriptionNames))]
         public async Task Step04(string subscriptionName)
         {
-            var entityPath = EntityNameHelper.FormatSubscriptionPath(topicPath, subscriptionName);
+            var entityPath = EntityNameHelper.FormatSubscriptionPath(TestEntities.TopicPath, subscriptionName);
 
             var serviceProvider = new ServiceCollection()
 
@@ -105,6 +102,6 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
         }
 
         [Theory(DisplayName = "Subscriptions have messages"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step05(string subscriptionName) => await managementFixture.SubscriptionHasMessages(topicPath, subscriptionName, 0);
+        public async Task Step05(string subscriptionName) => await managementFixture.SubscriptionHasMessages(TestEntities.TopicPath, subscriptionName, 0);
     }
 }
