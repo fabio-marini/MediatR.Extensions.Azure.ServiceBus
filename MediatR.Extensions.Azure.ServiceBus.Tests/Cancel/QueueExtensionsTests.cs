@@ -12,18 +12,18 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
+namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
 {
     [Trait("TestCategory", "Integration"), Collection("QueueTests")]
     [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
-    public class CancelExtensionsTests : IClassFixture<SequenceNumbersFixture>
+    public class QueueExtensionsTests : IClassFixture<SequenceNumbersFixture>
     {
         private readonly ITestOutputHelper log;
         private readonly SequenceNumbersFixture fix;
         private readonly string connectionString;
         private readonly ManagementFixture managementFixture;
 
-        public CancelExtensionsTests(ITestOutputHelper log, SequenceNumbersFixture fix)
+        public QueueExtensionsTests(ITestOutputHelper log, SequenceNumbersFixture fix)
         {
             this.log = log;
             this.fix = fix;

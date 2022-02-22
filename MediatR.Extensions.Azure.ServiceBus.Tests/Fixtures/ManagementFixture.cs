@@ -51,6 +51,21 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             messageCount.Should().Be(expectedCount);
         }
 
+        public async Task TopicHasScheduledMessages(string topicPath, int expectedCount)
+        {
+            var retryPolicy = Policy.HandleResult<long>(res => res != expectedCount)
+                .WaitAndRetryAsync(5, x => TimeSpan.FromMilliseconds(500));
+
+            var messageCount = await retryPolicy.ExecuteAsync(async () =>
+            {
+                var runtimeInfo = await managementClient.GetTopicRuntimeInfoAsync(topicPath);
+
+                return runtimeInfo.MessageCountDetails.ScheduledMessageCount;
+            });
+
+            messageCount.Should().Be(expectedCount);
+        }
+
         public async Task TopicIsRecreated(string topicPath, string subscriptionName)
         {
             if (await managementClient.TopicExistsAsync(topicPath) == false)

@@ -17,10 +17,9 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
     [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
     public class QueueExtensionsTests
     {
-        // TODO: can refactor DI extensions to be non-generic if always using test echo req/res?
-        // TODO: ensure private IConfig member is removed from all tests and is only used in the ctor to build the mgmt fixture...
+        // TODO: reorg class files in topics/queues folders and cancel/core/other test classes
+        // TODO: can refactor DI extensions to be non-generic if always using test echo req/res? Also applies to storage extensions...
         // TODO: can refactor all theories to be facts and use a single entity? 
-        // TODO: repeat cancel tests for topics?
 
         // TODO: implement session
         // TODO: commands unit tests + docs
@@ -32,7 +31,6 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         // TODO: confirm core doesn't support: sessions, manual complete
 
         private readonly ITestOutputHelper log;
-
         private readonly string connectionString;
         private readonly ManagementFixture managementFixture;
 

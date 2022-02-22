@@ -18,7 +18,6 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
     public class QueueExtensionsTests
     {
         private readonly ITestOutputHelper log;
-
         private readonly string connectionString;
         private readonly ManagementFixture managementFixture;
 
