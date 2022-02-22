@@ -56,8 +56,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
                 {
                     MinimumLogLevel = LogLevel.Debug
                 })
-                .AddMessageOptions<EchoRequest, EchoResponse>()
-                .AddSendMessageExtensions<EchoRequest, EchoResponse>()
+                .AddMessageOptions()
+                .AddSendMessageExtensions()
 
                 .BuildServiceProvider();
 
@@ -84,8 +84,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
                 {
                     MinimumLogLevel = LogLevel.Debug
                 })
-                .AddMessageOptions<EchoRequest, EchoResponse>()
-                .AddReceiveMessageExtensions<EchoRequest, EchoResponse>()
+                .AddMessageOptions()
+                .AddReceiveMessageExtensions()
 
                 .BuildServiceProvider();
 

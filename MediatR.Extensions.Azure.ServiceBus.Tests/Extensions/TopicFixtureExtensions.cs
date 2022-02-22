@@ -12,7 +12,15 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
     public static class TopicFixtureExtensions
     {
-        public static IServiceCollection AddTopicOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        public static IServiceCollection AddTopicOptions(this IServiceCollection services) => services.AddTopicOptions<EchoRequest, EchoResponse>();
+
+        public static IServiceCollection AddSubscriptionOptions(this IServiceCollection services) => services.AddSubscriptionOptions<EchoRequest, EchoResponse>();
+
+        public static IServiceCollection AddSendTopicMessageExtensions(this IServiceCollection services) => services.AddSendTopicMessageExtensions<EchoRequest, EchoResponse>();
+
+        public static IServiceCollection AddReceiveSubscriptionMessageExtensions(this IServiceCollection services, string subscriptionName) => services.AddReceiveSubscriptionMessageExtensions<EchoRequest, EchoResponse>(subscriptionName);
+
+        private static IServiceCollection AddTopicOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
         {
             return services
 
@@ -67,7 +75,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 ;
         }
 
-        public static IServiceCollection AddSubscriptionOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        private static IServiceCollection AddSubscriptionOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
         {
             return services
 
@@ -110,7 +118,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 ;
         }
 
-        public static IServiceCollection AddSendTopicMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        private static IServiceCollection AddSendTopicMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
         {
             return services
 
@@ -150,7 +158,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 ;
         }
 
-        public static IServiceCollection AddReceiveSubscriptionMessageExtensions<TRequest, TResponse>(this IServiceCollection services, string subscriptionName) where TRequest : IRequest<TResponse>
+        private static IServiceCollection AddReceiveSubscriptionMessageExtensions<TRequest, TResponse>(this IServiceCollection services, string subscriptionName) where TRequest : IRequest<TResponse>
         {
             // only execute one receive extension at the time, otherwise the first will consume the
             // cancellation token and when the next 3 start they will be cancelled straight away...

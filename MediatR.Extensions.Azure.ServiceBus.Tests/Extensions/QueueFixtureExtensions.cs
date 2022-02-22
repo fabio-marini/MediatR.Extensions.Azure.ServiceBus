@@ -12,7 +12,13 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
     public static class QueueFixtureExtensions
     {
-        public static IServiceCollection AddQueueOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        public static IServiceCollection AddQueueOptions(this IServiceCollection services) => services.AddQueueOptions<EchoRequest, EchoResponse>();
+
+        public static IServiceCollection AddSendQueueMessageExtensions(this IServiceCollection services) => services.AddSendQueueMessageExtensions<EchoRequest, EchoResponse>();
+
+        public static IServiceCollection AddReceiveQueueMessageExtensions(this IServiceCollection services, string queuePath) => services.AddReceiveQueueMessageExtensions<EchoRequest, EchoResponse>(queuePath);
+
+        private static IServiceCollection AddQueueOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
         {
             return services
 
@@ -55,7 +61,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 ;
         }
 
-        public static IServiceCollection AddSendQueueMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        private static IServiceCollection AddSendQueueMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
         {
             return services
 
@@ -95,7 +101,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 ;
         }
 
-        public static IServiceCollection AddReceiveQueueMessageExtensions<TRequest, TResponse>(this IServiceCollection services, string queuePath) where TRequest : IRequest<TResponse>
+        private static IServiceCollection AddReceiveQueueMessageExtensions<TRequest, TResponse>(this IServiceCollection services, string queuePath) where TRequest : IRequest<TResponse>
         {
             // only execute one receive extension at the time, otherwise the first will consume the
             // cancellation token and when the next 3 start they will be cancelled straight away...

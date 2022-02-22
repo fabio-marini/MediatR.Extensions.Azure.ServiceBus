@@ -59,8 +59,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
                 {
                     MinimumLogLevel = LogLevel.Debug
                 })
-                .AddMessageOptions<EchoRequest, EchoResponse>()
-                .AddSendMessageExtensions<EchoRequest, EchoResponse>()
+                .AddMessageOptions()
+                .AddSendMessageExtensions()
                 .AddScoped<PipelineContext>()
 
                 .BuildServiceProvider();
@@ -114,8 +114,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
                 {
                     MinimumLogLevel = LogLevel.Debug
                 })
-                .AddMessageOptions<EchoRequest, EchoResponse>()
-                .AddCancelMessageExtensions<EchoRequest, EchoResponse>()
+                .AddMessageOptions()
+                .AddCancelMessageExtensions()
                 .AddScoped<PipelineContext>()
 
                 .BuildServiceProvider();

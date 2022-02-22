@@ -11,15 +11,15 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
     public static class CoreFixtureExtensions
     {
-        private static IServiceCollection AddMessageOptions(this IServiceCollection services) => services.AddMessageOptions<EchoRequest, EchoResponse>();
+        public static IServiceCollection AddMessageOptions(this IServiceCollection services) => services.AddMessageOptions<EchoRequest, EchoResponse>();
 
-        private static IServiceCollection AddSendMessageExtensions(this IServiceCollection services) => services.AddSendMessageExtensions<EchoRequest, EchoResponse>();
+        public static IServiceCollection AddSendMessageExtensions(this IServiceCollection services) => services.AddSendMessageExtensions<EchoRequest, EchoResponse>();
 
-        private static IServiceCollection AddCancelMessageExtensions(this IServiceCollection services) => services.AddCancelMessageExtensions<EchoRequest, EchoResponse>();
+        public static IServiceCollection AddCancelMessageExtensions(this IServiceCollection services) => services.AddCancelMessageExtensions<EchoRequest, EchoResponse>();
 
-        private static IServiceCollection AddReceiveMessageExtensions(this IServiceCollection services) => services.AddReceiveMessageExtensions<EchoRequest, EchoResponse>();
+        public static IServiceCollection AddReceiveMessageExtensions(this IServiceCollection services) => services.AddReceiveMessageExtensions<EchoRequest, EchoResponse>();
 
-        public static IServiceCollection AddMessageOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        private static IServiceCollection AddMessageOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
         {
             return services
 
@@ -78,7 +78,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 ;
         }
 
-        public static IServiceCollection AddSendMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        private static IServiceCollection AddSendMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
         {
             return services
 
@@ -118,7 +118,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 ;
         }
 
-        public static IServiceCollection AddCancelMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        private static IServiceCollection AddCancelMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
         {
             return services
 
@@ -158,7 +158,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 ;
         }
 
-        public static IServiceCollection AddReceiveMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        private static IServiceCollection AddReceiveMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
         {
             return services
 

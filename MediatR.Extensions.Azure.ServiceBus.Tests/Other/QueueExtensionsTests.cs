@@ -17,8 +17,6 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
     [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
     public class QueueExtensionsTests
     {
-        // TODO: reorg class files in topics/queues folders and cancel/core/other test classes
-        // TODO: can refactor DI extensions to be non-generic if always using test echo req/res? Also applies to storage extensions...
         // TODO: can refactor all theories to be facts and use a single entity? 
 
         // TODO: implement session
@@ -29,6 +27,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         // TODO: update storage test fixtures so tables/containers are deleted on dispose?
         // FIXME: BlobClient is a delegate, but AS table and queue clients are instances - what should SB topic and queue clients be?!?
         // TODO: confirm core doesn't support: sessions, manual complete
+        // TODO: refactor storage DI extensions to be non-generic...
 
         private readonly ITestOutputHelper log;
         private readonly string connectionString;
@@ -69,8 +68,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 {
                     MinimumLogLevel = LogLevel.Debug
                 })
-                .AddQueueOptions<EchoRequest, EchoResponse>()
-                .AddSendQueueMessageExtensions<EchoRequest, EchoResponse>()
+                .AddQueueOptions()
+                .AddSendQueueMessageExtensions()
 
                 .BuildServiceProvider();
 
@@ -97,8 +96,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 {
                     MinimumLogLevel = LogLevel.Debug
                 })
-                .AddQueueOptions<EchoRequest, EchoResponse>()
-                .AddReceiveQueueMessageExtensions<EchoRequest, EchoResponse>(queuePath)
+                .AddQueueOptions()
+                .AddReceiveQueueMessageExtensions(queuePath)
 
                 .BuildServiceProvider();
 
