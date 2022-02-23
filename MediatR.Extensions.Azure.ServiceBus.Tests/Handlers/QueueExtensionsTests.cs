@@ -11,24 +11,12 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MediatR.Extensions.Azure.ServiceBus.Tests
+namespace MediatR.Extensions.Azure.ServiceBus.Tests.Handlers
 {
     [Trait("TestCategory", "Integration"), Collection("QueueTests")]
     [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
     public class QueueExtensionsTests
     {
-        // TODO: can refactor all theories to be facts and use a single entity? 
-
-        // TODO: implement session
-        // TODO: commands unit tests + docs
-
-        // TODO: list contoso/fabrikam examples (not integration tests, see EntityNameHelper for DLQ)
-
-        // TODO: update storage test fixtures so tables/containers are deleted on dispose?
-        // FIXME: BlobClient is a delegate, but AS table and queue clients are instances - what should SB topic and queue clients be?!?
-        // TODO: confirm core doesn't support: sessions, manual complete
-        // TODO: refactor storage DI extensions to be non-generic...
-
         private readonly ITestOutputHelper log;
         private readonly string connectionString;
         private readonly ManagementFixture managementFixture;
@@ -64,10 +52,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .AddTransient<QueueClient>(sp => new QueueClient(connectionString, queuePath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
-                {
-                    MinimumLogLevel = LogLevel.Debug
-                })
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
                 .AddQueueOptions()
                 .AddSendQueueMessageExtensions()
 
@@ -92,10 +77,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .AddTransient<QueueClient>(sp => new QueueClient(connectionString, queuePath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
-                {
-                    MinimumLogLevel = LogLevel.Debug
-                })
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
                 .AddQueueOptions()
                 .AddReceiveQueueMessageExtensions(queuePath)
 

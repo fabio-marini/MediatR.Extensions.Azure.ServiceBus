@@ -6,7 +6,6 @@ using Microsoft.Azure.ServiceBus.Management;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -33,19 +32,11 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
             managementFixture = new ManagementFixture(new ManagementClient(connectionString));
         }
 
-        public static IEnumerable<object[]> SubscriptionNames()
-        {
-            yield return new object[] { TestEntities.RequestProcessor };
-            yield return new object[] { TestEntities.ResponseProcessor };
-            yield return new object[] { TestEntities.RequestBehavior };
-            yield return new object[] { TestEntities.ResponseBehavior };
-        }
+        [Fact(DisplayName = "01. Topic and subscriptions are recreated")]
+        public async Task Step01() => await managementFixture.TopicIsRecreated(TestEntities.TopicPath, TestEntities.SubscriptionName);
 
-        [Theory(DisplayName = "Topic and subscriptions are recreated"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step01(string subscriptionName) => await managementFixture.TopicIsRecreated(TestEntities.TopicPath, subscriptionName);
-
-        [Theory(DisplayName = "Send extensions are executed"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step02(string subscriptionName)
+        [Fact(DisplayName = "02. Send extensions are executed")]
+        public async Task Step02()
         {
             var serviceProvider = new ServiceCollection()
 
@@ -53,10 +44,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
                 .AddTransient<MessageSender>(sp => new MessageSender(connectionString, TestEntities.TopicPath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
-                {
-                    MinimumLogLevel = LogLevel.Debug
-                })
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
                 .AddMessageOptions()
                 .AddSendMessageExtensions()
 
@@ -69,13 +57,13 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
             res.Message.Should().Be(EchoRequest.Default.Message);
         }
 
-        [Theory(DisplayName = "Subscriptions have messages"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step03(string subscriptionName) => await managementFixture.SubscriptionHasMessages(TestEntities.TopicPath, subscriptionName, 4);
+        [Fact(DisplayName = "03. Subscriptions have messages")]
+        public async Task Step03() => await managementFixture.SubscriptionHasMessages(TestEntities.TopicPath, TestEntities.SubscriptionName, 4);
 
-        [Theory(DisplayName = "Receive extensions are executed"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step04(string subscriptionName)
+        [Fact(DisplayName = "04. Receive extensions are executed")]
+        public async Task Step04()
         {
-            var entityPath = EntityNameHelper.FormatSubscriptionPath(TestEntities.TopicPath, subscriptionName);
+            var entityPath = EntityNameHelper.FormatSubscriptionPath(TestEntities.TopicPath, TestEntities.SubscriptionName);
 
             var serviceProvider = new ServiceCollection()
 
@@ -83,10 +71,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
                 .AddTransient<MessageReceiver>(sp => new MessageReceiver(connectionString, entityPath, ReceiveMode.ReceiveAndDelete))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
-                {
-                    MinimumLogLevel = LogLevel.Debug
-                })
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
                 .AddMessageOptions()
                 .AddReceiveMessageExtensions()
 
@@ -101,7 +86,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
             res.Message.Should().Be(EchoRequest.Default.Message);
         }
 
-        [Theory(DisplayName = "Subscriptions have messages"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step05(string subscriptionName) => await managementFixture.SubscriptionHasMessages(TestEntities.TopicPath, subscriptionName, 0);
+        [Fact(DisplayName = "05. Subscriptions have messages")]
+        public async Task Step05() => await managementFixture.SubscriptionHasMessages(TestEntities.TopicPath, TestEntities.SubscriptionName, 0);
     }
 }

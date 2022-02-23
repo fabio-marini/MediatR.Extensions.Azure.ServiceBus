@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MediatR.Extensions.Azure.ServiceBus.Tests
+namespace MediatR.Extensions.Azure.ServiceBus.Tests.Handlers
 {
     [Trait("TestCategory", "Integration"), Collection("TopicTests")]
     [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
@@ -24,7 +24,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         public TopicExtensionsTests(ITestOutputHelper log)
         {
             this.log = log;
-            
+
             var cfg = new ConfigurationBuilder().AddUserSecrets(this.GetType().Assembly).Build();
 
             connectionString = cfg.GetValue<string>("AzureWebJobsServiceBus");
@@ -41,7 +41,15 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         }
 
         [Theory(DisplayName = "Topic and subscriptions are recreated"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step01(string subscriptionName) => await managementFixture.TopicIsRecreated(TestEntities.TopicPath, subscriptionName);
+        public async Task Step01(string subscriptionName)
+        {
+            var defaultRule = new RuleDescription
+            {
+                Filter = new CorrelationFilter(subscriptionName)
+            };
+
+            await managementFixture.TopicIsRecreated(TestEntities.TopicPath, subscriptionName, defaultRule);
+        }
 
         [Theory(DisplayName = "Send extensions are executed"), MemberData(nameof(SubscriptionNames))]
         public async Task Step02(string subscriptionName)
@@ -52,10 +60,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .AddTransient<TopicClient>(sp => new TopicClient(connectionString, TestEntities.TopicPath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
-                {
-                    MinimumLogLevel = LogLevel.Debug
-                })
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
                 .AddTopicOptions()
                 .AddSendTopicMessageExtensions()
 
@@ -80,10 +85,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .AddTransient<SubscriptionClient>(sp => new SubscriptionClient(connectionString, TestEntities.TopicPath, subscriptionName))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
-                {
-                    MinimumLogLevel = LogLevel.Debug
-                })
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
                 .AddSubscriptionOptions()
                 .AddReceiveSubscriptionMessageExtensions(subscriptionName)
 

@@ -6,7 +6,6 @@ using Microsoft.Azure.ServiceBus.Management;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -32,30 +31,19 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
             managementFixture = new ManagementFixture(new ManagementClient(connectionString));
         }
 
-        public static IEnumerable<object[]> QueueNames()
-        {
-            yield return new object[] { TestEntities.RequestProcessor };
-            yield return new object[] { TestEntities.ResponseProcessor };
-            yield return new object[] { TestEntities.RequestBehavior };
-            yield return new object[] { TestEntities.ResponseBehavior };
-        }
+        [Fact(DisplayName = "01. Queues are recreated")]
+        public async Task Step01() => await managementFixture.QueueIsRecreated(TestEntities.QueuePath);
 
-        [Theory(DisplayName = "Queues are recreated"), MemberData(nameof(QueueNames))]
-        public async Task Step01(string queuePath) => await managementFixture.QueueIsRecreated(queuePath);
-
-        [Theory(DisplayName = "Send extensions are executed"), MemberData(nameof(QueueNames))]
-        public async Task Step02(string queuePath)
+        [Fact(DisplayName = "02. Send extensions are executed")]
+        public async Task Step02()
         {
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddTransient<MessageSender>(sp => new MessageSender(connectionString, queuePath))
+                .AddTransient<MessageSender>(sp => new MessageSender(connectionString, TestEntities.QueuePath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
-                {
-                    MinimumLogLevel = LogLevel.Debug
-                })
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
                 .AddMessageOptions()
                 .AddSendMessageExtensions()
 
@@ -68,22 +56,19 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
             res.Message.Should().Be(EchoRequest.Default.Message);
         }
 
-        [Theory(DisplayName = "Queues have messages"), MemberData(nameof(QueueNames))]
-        public async Task Step03(string queuePath) => await managementFixture.QueueHasMessages(queuePath, 4);
+        [Fact(DisplayName = "03. Queues have messages")]
+        public async Task Step03() => await managementFixture.QueueHasMessages(TestEntities.QueuePath, 4);
 
-        [Theory(DisplayName = "Receive extensions are executed"), MemberData(nameof(QueueNames))]
-        public async Task Step04(string queuePath)
+        [Fact(DisplayName = "04. Receive extensions are executed")]
+        public async Task Step04()
         {
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddTransient<MessageReceiver>(sp => new MessageReceiver(connectionString, queuePath, ReceiveMode.ReceiveAndDelete))
+                .AddTransient<MessageReceiver>(sp => new MessageReceiver(connectionString, TestEntities.QueuePath, ReceiveMode.ReceiveAndDelete))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
-                {
-                    MinimumLogLevel = LogLevel.Debug
-                })
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
                 .AddMessageOptions()
                 .AddReceiveMessageExtensions()
 
@@ -96,7 +81,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
             res.Message.Should().Be(EchoRequest.Default.Message);
         }
 
-        [Theory(DisplayName = "Queues have messages"), MemberData(nameof(QueueNames))]
-        public async Task Step05(string queuePath) => await managementFixture.QueueHasMessages(queuePath, 0);
+        [Fact(DisplayName = "05. Queues have messages")]
+        public async Task Step05() => await managementFixture.QueueHasMessages(TestEntities.QueuePath, 0);
     }
 }

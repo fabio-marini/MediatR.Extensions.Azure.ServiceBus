@@ -35,19 +35,11 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
             managementFixture = new ManagementFixture(new ManagementClient(connectionString));
         }
 
-        public static IEnumerable<object[]> SubscriptionNames()
-        {
-            yield return new object[] { TestEntities.RequestProcessor };
-            yield return new object[] { TestEntities.ResponseProcessor };
-            yield return new object[] { TestEntities.RequestBehavior };
-            yield return new object[] { TestEntities.ResponseBehavior };
-        }
+        [Fact(DisplayName = "01. Topics are recreated")]
+        public async Task Step01() => await managementFixture.TopicIsRecreated(TestEntities.TopicPath, TestEntities.SubscriptionName);
 
-        [Theory(DisplayName = "Topics are recreated"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step01(string subscriptionName) => await managementFixture.TopicIsRecreated(TestEntities.TopicPath, subscriptionName);
-
-        [Theory(DisplayName = "Send extensions are executed"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step02(string subscriptionName)
+        [Fact(DisplayName = "02. Send extensions are executed")]
+        public async Task Step02()
         {
             var serviceProvider = new ServiceCollection()
 
@@ -55,10 +47,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
                 .AddTransient<MessageSender>(sp => new MessageSender(connectionString, TestEntities.TopicPath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
-                {
-                    MinimumLogLevel = LogLevel.Debug
-                })
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
                 .AddMessageOptions()
                 .AddSendMessageExtensions()
                 .AddScoped<PipelineContext>()
@@ -78,31 +67,14 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
             ctx.Should().ContainKey(ContextKeys.SequenceNumbers);
             ctx[ContextKeys.SequenceNumbers].As<Queue<long>>().Should().HaveCount(4);
 
-            switch (subscriptionName)
-            {
-                case TestEntities.RequestProcessor:
-                    fix.RequestProcessor = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
-                    break;
-
-                case TestEntities.ResponseProcessor:
-                    fix.ResponseProcessor = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
-                    break;
-
-                case TestEntities.RequestBehavior:
-                    fix.RequestBehavior = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
-                    break;
-
-                case TestEntities.ResponseBehavior:
-                    fix.ResponseBehavior = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
-                    break;
-            }
+            fix.TestTopic = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
         }
 
-        [Fact(DisplayName = "Topic has scheduled messages")]
-        public async Task Step03() => await managementFixture.TopicHasScheduledMessages(TestEntities.TopicPath, 16);
+        [Fact(DisplayName = "03. Topic has scheduled messages")]
+        public async Task Step03() => await managementFixture.TopicHasScheduledMessages(TestEntities.TopicPath, 4);
 
-        [Theory(DisplayName = "Cancel extensions are executed"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step04(string subscriptionName)
+        [Fact(DisplayName = "04. Cancel extensions are executed")]
+        public async Task Step04()
         {
             var serviceProvider = new ServiceCollection()
 
@@ -110,10 +82,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
                 .AddTransient<MessageSender>(sp => new MessageSender(connectionString, TestEntities.TopicPath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions
-                {
-                    MinimumLogLevel = LogLevel.Debug
-                })
+                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
                 .AddMessageOptions()
                 .AddCancelMessageExtensions()
                 .AddScoped<PipelineContext>()
@@ -122,24 +91,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
 
             var ctx = serviceProvider.GetRequiredService<PipelineContext>();
 
-            switch (subscriptionName)
-            {
-                case TestEntities.RequestProcessor:
-                    ctx.Add(ContextKeys.SequenceNumbers, fix.RequestProcessor);
-                    break;
-
-                case TestEntities.ResponseProcessor:
-                    ctx.Add(ContextKeys.SequenceNumbers, fix.ResponseProcessor);
-                    break;
-
-                case TestEntities.RequestBehavior:
-                    ctx.Add(ContextKeys.SequenceNumbers, fix.RequestBehavior);
-                    break;
-
-                case TestEntities.ResponseBehavior:
-                    ctx.Add(ContextKeys.SequenceNumbers, fix.ResponseBehavior);
-                    break;
-            }
+            ctx.Add(ContextKeys.SequenceNumbers, fix.TestTopic);
 
             var med = serviceProvider.GetRequiredService<IMediator>();
 
@@ -148,7 +100,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
             res.Message.Should().Be(EchoRequest.Default.Message);
         }
 
-        [Theory(DisplayName = "Subscriptions have messages"), MemberData(nameof(SubscriptionNames))]
-        public async Task Step05(string subscriptionName) => await managementFixture.SubscriptionHasMessages(TestEntities.TopicPath, subscriptionName, 0);
+        [Fact(DisplayName = "05. Topic has scheduled messages")]
+        public async Task Step05() => await managementFixture.TopicHasScheduledMessages(TestEntities.TopicPath, 0);
     }
 }

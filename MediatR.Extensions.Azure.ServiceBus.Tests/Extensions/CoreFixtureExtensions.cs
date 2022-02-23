@@ -29,10 +29,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.IsEnabled = true;
                     opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<MessageReceiver>();
                     opt.MessageSender = (req, ctx) => svc.GetRequiredService<MessageSender>();
-                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
-                    {
-                        CorrelationId = TestEntities.RequestProcessor
-                    };
+                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
                 }))
                 .Services
 
@@ -42,10 +39,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.IsEnabled = true;
                     opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<MessageReceiver>();
                     opt.MessageSender = (req, ctx) => svc.GetRequiredService<MessageSender>();
-                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
-                    {
-                        CorrelationId = TestEntities.ResponseProcessor
-                    };
+                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
                 }))
                 .Services
 
@@ -55,10 +49,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.IsEnabled = true;
                     opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<MessageReceiver>();
                     opt.MessageSender = (req, ctx) => svc.GetRequiredService<MessageSender>();
-                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
-                    {
-                        CorrelationId = TestEntities.RequestBehavior
-                    };
+                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
                 }))
                 .Services
 
@@ -68,10 +59,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.IsEnabled = true;
                     opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<MessageReceiver>();
                     opt.MessageSender = (req, ctx) => svc.GetRequiredService<MessageSender>();
-                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
-                    {
-                        CorrelationId = TestEntities.ResponseBehavior
-                    };
+                    opt.Message = (req, ctx) => new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
                 }))
                 .Services
 

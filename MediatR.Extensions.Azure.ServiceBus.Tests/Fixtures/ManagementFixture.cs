@@ -66,7 +66,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             messageCount.Should().Be(expectedCount);
         }
 
-        public async Task TopicIsRecreated(string topicPath, string subscriptionName)
+        public async Task TopicIsRecreated(string topicPath, string subscriptionName, RuleDescription defaultRule = default)
         {
             if (await managementClient.TopicExistsAsync(topicPath) == false)
             {
@@ -80,12 +80,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
             var subscriptionDescription = new SubscriptionDescription(topicPath, subscriptionName);
 
-            var defaultRuleDescription = new RuleDescription
-            {
-                Filter = new CorrelationFilter(subscriptionName)
-            };
-
-            await managementClient.CreateSubscriptionAsync(subscriptionDescription, defaultRuleDescription);
+            await managementClient.CreateSubscriptionAsync(subscriptionDescription, defaultRule);
         }
 
         public async Task SubscriptionHasMessages(string topicPath, string subscriptionName, int expectedCount)

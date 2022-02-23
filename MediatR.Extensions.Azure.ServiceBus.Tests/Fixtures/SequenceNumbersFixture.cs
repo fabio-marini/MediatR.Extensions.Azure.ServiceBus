@@ -16,5 +16,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         public Queue<long> ResponseProcessor { get; set; }
         public Queue<long> RequestBehavior { get; set; }
         public Queue<long> ResponseBehavior { get; set; }
+
+        public Queue<long> TestQueue { get; set; }
+        public Queue<long> TestTopic { get; set; }
     }
 }
