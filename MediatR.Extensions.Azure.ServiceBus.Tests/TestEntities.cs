@@ -1,15 +1,10 @@
 ﻿namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
-    // FIXME: BlobClient is a delegate, but AS table and queue clients are instances - what should SB topic and queue clients be?!?
+    // FIXME: BlobClient is a delegate, but table and queue clients are instances - what should SB topic and queue clients be?!?
     // TODO: commands unit tests + docs + read migration guide @ https://tinyurl.com/yzkcucfv
-    // FIXME: get rid of EntityNameHelper...
+    // TODO: rename core project (drop core)
 
-    // TODO: how to refactor the RegisterMessageHandler theories as facts and use a single entity
-    //       (each extension will consume all messages from a queue/sub so needs to be executed independently)
-
-    // TODO: list contoso/fabrikam examples (not integration tests, include some that use theDLQ)
-
-    // TODO: confirm core doesn't support: sessions, manual complete
+    // TODO: list contoso/fabrikam examples (not integration tests, include some that use the DLQ)
 
     public class TestEntities
     {

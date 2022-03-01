@@ -17,12 +17,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Core\ReceiveMessageCommandTests.cs" />
+    <Compile Remove="Core\SendMessageCommandTests.cs" />
     <Compile Remove="EntityNameHelper.cs" />
-    <Compile Remove="Extensions\QueueFixtureExtensions.cs" />
-    <Compile Remove="Extensions\TopicFixtureExtensions.cs" />
+    <Compile Remove="Integration\Extensions\QueueFixtureExtensions.cs" />
+    <Compile Remove="Integration\Extensions\TopicFixtureExtensions.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Core\ReceiveMessageCommandTests.cs" />
+    <None Include="Core\SendMessageCommandTests.cs" />
     <None Include="EntityNameHelper.cs" />
   </ItemGroup>
 

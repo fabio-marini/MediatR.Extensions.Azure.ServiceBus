@@ -26,8 +26,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .Configure<IServiceProvider>((Action<MessageOptions<TRequest>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
-                    opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<ServiceBusReceiver>();
-                    opt.MessageSender = (req, ctx) => svc.GetRequiredService<ServiceBusSender>();
+                    opt.Receiver = (req, ctx) => svc.GetRequiredService<ServiceBusReceiver>();
+                    opt.Sender = (req, ctx) => svc.GetRequiredService<ServiceBusSender>();
                     opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
                 }))
                 .Services
@@ -36,8 +36,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .Configure<IServiceProvider>((Action<MessageOptions<TResponse>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
-                    opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<ServiceBusReceiver>();
-                    opt.MessageSender = (req, ctx) => svc.GetRequiredService<ServiceBusSender>();
+                    opt.Receiver = (req, ctx) => svc.GetRequiredService<ServiceBusReceiver>();
+                    opt.Sender = (req, ctx) => svc.GetRequiredService<ServiceBusSender>();
                     opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
                 }))
                 .Services
@@ -46,8 +46,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .Configure<IServiceProvider>((Action<MessageOptions<TRequest>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
-                    opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<ServiceBusReceiver>();
-                    opt.MessageSender = (req, ctx) => svc.GetRequiredService<ServiceBusSender>();
+                    opt.Receiver = (req, ctx) => svc.GetRequiredService<ServiceBusReceiver>();
+                    opt.Sender = (req, ctx) => svc.GetRequiredService<ServiceBusSender>();
                     opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
                 }))
                 .Services
@@ -56,8 +56,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                 .Configure<IServiceProvider>((Action<MessageOptions<TResponse>, IServiceProvider>)((opt, svc) =>
                 {
                     opt.IsEnabled = true;
-                    opt.MessageReceiver = (req, ctx) => svc.GetRequiredService<ServiceBusReceiver>();
-                    opt.MessageSender = (req, ctx) => svc.GetRequiredService<ServiceBusSender>();
+                    opt.Receiver = (req, ctx) => svc.GetRequiredService<ServiceBusReceiver>();
+                    opt.Sender = (req, ctx) => svc.GetRequiredService<ServiceBusSender>();
                     opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
                 }))
                 .Services

@@ -32,12 +32,12 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 return;
             }
 
-            if (opt.Value.MessageReceiver == null)
+            if (opt.Value.Receiver == null)
             {
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Receiver");
             }
 
-            var messageReceiver = opt.Value.MessageReceiver(message, ctx);
+            var messageReceiver = opt.Value.Receiver(message, ctx);
 
             if (messageReceiver == null)
             {
