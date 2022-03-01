@@ -11,12 +11,29 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Handlers\**" />
+    <EmbeddedResource Remove="Handlers\**" />
+    <None Remove="Handlers\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="EntityNameHelper.cs" />
+    <Compile Remove="Extensions\QueueFixtureExtensions.cs" />
+    <Compile Remove="Extensions\TopicFixtureExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="EntityNameHelper.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="6.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="5.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
+    <PackageReference Include="Polly" Version="7.2.3" />
     <PackageReference Include="Timeless.Testing.Xunit" Version="1.0.0-ci.20220210.5" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
@@ -31,8 +48,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MediatR.Extensions.Azure.ServiceBus.Core\MediatR.Extensions.Azure.ServiceBus.Core.csproj" />
-    <ProjectReference Include="..\MediatR.Extensions.Azure.ServiceBus.Queues\MediatR.Extensions.Azure.ServiceBus.Queues.csproj" />
-    <ProjectReference Include="..\MediatR.Extensions.Azure.ServiceBus.Topics\MediatR.Extensions.Azure.ServiceBus.Topics.csproj" />
   </ItemGroup>
 
 </Project>

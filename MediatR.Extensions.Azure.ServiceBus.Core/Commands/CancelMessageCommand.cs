@@ -56,8 +56,6 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
                 var sequenceNumber = sequenceNumbers.Dequeue();
 
-                log.LogInformation("Cancelling message {Id}", sequenceNumber);
-
                 await messageSender.CancelScheduledMessageAsync(sequenceNumber);
 
                 log.LogDebug("Command {Command} completed", this.GetType().Name);

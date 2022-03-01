@@ -24,6 +24,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
         public virtual async Task ExecuteAsync(TMessage message, CancellationToken cancellationToken)
         {
+            // TODO: use default Message, i.e. serialize req using json...
             cancellationToken.ThrowIfCancellationRequested();
 
             if (opt.Value.IsEnabled == false)
@@ -50,31 +51,36 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
 
+            var msg = opt.Value.Message(message, ctx);
+
+            if (msg == null)
+            {
+                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Message");
+            }
+
             try
             {
                 if (ctx != null && ctx.ContainsKey(ContextKeys.EnqueueTimeUtc))
                 {
+                    // retrieve enqueue time from context and schedule message
                     var enqueueTimeUtc = (DateTimeOffset)ctx[ContextKeys.EnqueueTimeUtc];
 
-                    var sequenceNumber = await messageSender.ScheduleMessageAsync(opt.Value.Message(message, ctx), enqueueTimeUtc);
-
-                    log.LogInformation("Scheduled message {Id}", sequenceNumber);
+                    var sequenceNumber = await messageSender.ScheduleMessageAsync(msg, enqueueTimeUtc, cancellationToken);
 
                     if (ctx.ContainsKey(ContextKeys.SequenceNumbers) == false)
                     {
                         ctx.Add(ContextKeys.SequenceNumbers, new Queue<long>());
                     }
 
+                    // add scheduled message sequence number to context if required for cancellation
                     var sequenceNumbers = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
 
                     sequenceNumbers.Enqueue(sequenceNumber);
                 }
                 else
                 {
-                    await messageSender.SendAsync(opt.Value.Message(message, ctx));
+                    await messageSender.SendMessageAsync(msg, cancellationToken);
                 }
-
-                await messageSender.CloseAsync();
 
                 log.LogDebug("Command {Command} completed", this.GetType().Name);
             }

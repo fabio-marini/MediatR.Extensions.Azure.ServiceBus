@@ -1,8 +1,7 @@
-﻿using FluentAssertions;
+﻿using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
+using FluentAssertions;
 using MediatR.Extensions.Azure.Storage.Examples;
-using Microsoft.Azure.ServiceBus;
-using Microsoft.Azure.ServiceBus.Core;
-using Microsoft.Azure.ServiceBus.Management;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,7 +27,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
 
             connectionString = cfg.GetValue<string>("AzureWebJobsServiceBus");
 
-            managementFixture = new ManagementFixture(new ManagementClient(connectionString));
+            managementFixture = new ManagementFixture(new ServiceBusAdministrationClient(connectionString));
         }
 
         [Fact(DisplayName = "01. Queues are recreated")]
@@ -40,10 +39,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddTransient<MessageSender>(sp => new MessageSender(connectionString, TestEntities.QueuePath))
+                .AddTransient<ServiceBusSender>(sp => new ServiceBusClient(connectionString).CreateSender(TestEntities.QueuePath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
+                .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
                 .AddMessageOptions()
                 .AddSendMessageExtensions()
 
@@ -62,13 +61,15 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
         [Fact(DisplayName = "04. Receive extensions are executed")]
         public async Task Step04()
         {
+            var receiveOptions = new ServiceBusReceiverOptions { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete };
+
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddTransient<MessageReceiver>(sp => new MessageReceiver(connectionString, TestEntities.QueuePath, ReceiveMode.ReceiveAndDelete))
+                .AddTransient<ServiceBusReceiver>(sp => new ServiceBusClient(connectionString).CreateReceiver(TestEntities.QueuePath, receiveOptions))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
+                .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
                 .AddMessageOptions()
                 .AddReceiveMessageExtensions()
 

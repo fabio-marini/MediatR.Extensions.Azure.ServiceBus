@@ -11,7 +11,7 @@
 
   <ItemGroup>
 
-    <PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.0.0" />
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.6.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="MediatR.Extensions.Abstractions" Version="1.0.0" />
   </ItemGroup>

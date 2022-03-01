@@ -46,14 +46,12 @@ namespace MediatR.Extensions.Azure.ServiceBus
             
             try
             {
-                var msg = await messageReceiver.ReceiveAsync();
+                var msg = await messageReceiver.ReceiveMessageAsync();
 
                 if (opt.Value.Received != null)
                 {
                     await opt.Value.Received(msg, ctx, message);
                 }
-
-                await messageReceiver.CloseAsync();
 
                 log.LogDebug("Command {Command} completed", this.GetType().Name);
             }
@@ -63,6 +61,8 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
                 throw new CommandException($"Command {this.GetType().Name} failed, see inner exception for details", ex);
             }
+
+            await messageReceiver.CloseAsync();
         }
     }
 }

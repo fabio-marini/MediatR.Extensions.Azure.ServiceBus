@@ -1,6 +1,5 @@
-﻿using FluentAssertions;
-using Microsoft.Azure.ServiceBus;
-using Microsoft.Azure.ServiceBus.Management;
+﻿using Azure.Messaging.ServiceBus.Administration;
+using FluentAssertions;
 using Polly;
 using System;
 using System.Threading.Tasks;
@@ -9,30 +8,30 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
     public class ManagementFixture
     {
-        private readonly ManagementClient managementClient;
+        private readonly ServiceBusAdministrationClient adminClient;
 
-        public ManagementFixture(ManagementClient managementClient)
+        public ManagementFixture(ServiceBusAdministrationClient adminClient)
         {
-            this.managementClient = managementClient;
+            this.adminClient = adminClient;
         }
 
         public async Task QueueIsRecreated(string queuePath)
         {
-            if (await managementClient.QueueExistsAsync(queuePath))
+            if (await adminClient.QueueExistsAsync(queuePath))
             {
-                var runtimeInfo = await managementClient.GetQueueRuntimeInfoAsync(queuePath);
+                var runtimeInfo = await adminClient.GetQueueRuntimePropertiesAsync(queuePath);
 
-                if (runtimeInfo.MessageCount > 0)
+                if (runtimeInfo.Value.TotalMessageCount > 0)
                 {
                     // only recreate queue if it has any messages...
-                    await managementClient.DeleteQueueAsync(queuePath);
+                    await adminClient.DeleteQueueAsync(queuePath);
 
-                    await managementClient.CreateQueueAsync(queuePath);
+                    await adminClient.CreateQueueAsync(queuePath);
                 }
             }
             else
             {
-                await managementClient.CreateQueueAsync(queuePath);
+                await adminClient.CreateQueueAsync(queuePath);
             }
         }
 
@@ -43,9 +42,9 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
             var messageCount = await retryPolicy.ExecuteAsync(async () =>
             {
-                var runtimeInfo = await managementClient.GetQueueRuntimeInfoAsync(queuePath);
+                var runtimeInfo = await adminClient.GetQueueRuntimePropertiesAsync(queuePath);
 
-                return runtimeInfo.MessageCount;
+                return runtimeInfo.Value.TotalMessageCount;
             });
 
             messageCount.Should().Be(expectedCount);
@@ -58,29 +57,29 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
             var messageCount = await retryPolicy.ExecuteAsync(async () =>
             {
-                var runtimeInfo = await managementClient.GetTopicRuntimeInfoAsync(topicPath);
+                var runtimeInfo = await adminClient.GetTopicRuntimePropertiesAsync(topicPath);
 
-                return runtimeInfo.MessageCountDetails.ScheduledMessageCount;
+                return runtimeInfo.Value.ScheduledMessageCount;
             });
 
             messageCount.Should().Be(expectedCount);
         }
 
-        public async Task TopicIsRecreated(string topicPath, string subscriptionName, RuleDescription defaultRule = default)
+        public async Task TopicIsRecreated(string topicPath, string subscriptionName, CreateRuleOptions defaultRule = default)
         {
-            if (await managementClient.TopicExistsAsync(topicPath) == false)
+            if (await adminClient.TopicExistsAsync(topicPath) == false)
             {
-                await managementClient.CreateTopicAsync(topicPath);
+                await adminClient.CreateTopicAsync(topicPath);
             }
 
-            if (await managementClient.SubscriptionExistsAsync(topicPath, subscriptionName) == true)
+            if (await adminClient.SubscriptionExistsAsync(topicPath, subscriptionName) == true)
             {
-                await managementClient.DeleteSubscriptionAsync(topicPath, subscriptionName);
+                await adminClient.DeleteSubscriptionAsync(topicPath, subscriptionName);
             }
 
-            var subscriptionDescription = new SubscriptionDescription(topicPath, subscriptionName);
+            var subscriptionDescription = new CreateSubscriptionOptions(topicPath, subscriptionName);
 
-            await managementClient.CreateSubscriptionAsync(subscriptionDescription, defaultRule);
+            await adminClient.CreateSubscriptionAsync(subscriptionDescription, defaultRule ?? new CreateRuleOptions());
         }
 
         public async Task SubscriptionHasMessages(string topicPath, string subscriptionName, int expectedCount)
@@ -90,9 +89,9 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
             var messageCount = await retryPolicy.ExecuteAsync(async () =>
             {
-                var runtimeInfo = await managementClient.GetSubscriptionRuntimeInfoAsync(topicPath, subscriptionName);
+                var runtimeInfo = await adminClient.GetSubscriptionRuntimePropertiesAsync(topicPath, subscriptionName);
 
-                return runtimeInfo.MessageCount;
+                return runtimeInfo.Value.TotalMessageCount;
             });
 
             messageCount.Should().Be(expectedCount);

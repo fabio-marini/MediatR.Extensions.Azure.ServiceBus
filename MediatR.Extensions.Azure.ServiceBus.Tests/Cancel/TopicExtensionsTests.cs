@@ -1,8 +1,8 @@
-﻿using FluentAssertions;
+﻿using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
+using FluentAssertions;
 using MediatR.Extensions.Abstractions;
 using MediatR.Extensions.Azure.Storage.Examples;
-using Microsoft.Azure.ServiceBus.Core;
-using Microsoft.Azure.ServiceBus.Management;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -32,7 +32,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
 
             connectionString = cfg.GetValue<string>("AzureWebJobsServiceBus");
 
-            managementFixture = new ManagementFixture(new ManagementClient(connectionString));
+            managementFixture = new ManagementFixture(new ServiceBusAdministrationClient(connectionString));
         }
 
         [Fact(DisplayName = "01. Topics are recreated")]
@@ -44,10 +44,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddTransient<MessageSender>(sp => new MessageSender(connectionString, TestEntities.TopicPath))
+                .AddTransient<ServiceBusSender>(sp => new ServiceBusClient(connectionString).CreateSender(TestEntities.TopicPath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
+                .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
                 .AddMessageOptions()
                 .AddSendMessageExtensions()
                 .AddScoped<PipelineContext>()
@@ -79,10 +79,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
             var serviceProvider = new ServiceCollection()
 
                 .AddMediatR(this.GetType())
-                .AddTransient<MessageSender>(sp => new MessageSender(connectionString, TestEntities.TopicPath))
+                .AddTransient<ServiceBusSender>(sp => new ServiceBusClient(connectionString).CreateSender(TestEntities.TopicPath))
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
-                .AddTransient<TestOutputLoggerOptions>(sp => new TestOutputLoggerOptions { MinimumLogLevel = LogLevel.Information })
+                .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
                 .AddMessageOptions()
                 .AddCancelMessageExtensions()
                 .AddScoped<PipelineContext>()
