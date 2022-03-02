@@ -32,16 +32,14 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 return;
             }
 
-            var messageReceiver = opt.Value.Receiver?.Invoke(msg, ctx);
-
-            if (messageReceiver == null)
+            if (opt.Value.Receiver == null)
             {
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Receiver");
             }
             
             try
             {
-                var targetMessage = await messageReceiver.ReceiveMessageAsync(cancellationToken: tkn);
+                var targetMessage = await opt.Value.Receiver.ReceiveMessageAsync(cancellationToken: tkn);
 
                 if (opt.Value.Received != null)
                 {
@@ -58,7 +56,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
             }
             finally
             {
-                await messageReceiver.CloseAsync(tkn);
+                await opt.Value.Receiver.CloseAsync(tkn);
             }
         }
     }

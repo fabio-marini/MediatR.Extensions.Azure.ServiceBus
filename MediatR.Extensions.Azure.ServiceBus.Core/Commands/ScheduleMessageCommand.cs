@@ -1,7 +1,9 @@
-﻿using MediatR.Extensions.Abstractions;
+﻿using Azure.Messaging.ServiceBus;
+using MediatR.Extensions.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -33,19 +35,12 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 return;
             }
 
-            var messageSender = opt.Value.Sender?.Invoke(msg, ctx);
-
-            if (messageSender == null)
+            if (opt.Value.Sender == null)
             {
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
 
-            var targetMessage = opt.Value.Message?.Invoke(msg, ctx);
-
-            if (targetMessage == null)
-            {
-                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Message");
-            }
+            var targetMessage = opt.Value.Message?.Invoke(msg, ctx) ?? new ServiceBusMessage(JsonConvert.SerializeObject(msg));
 
             try
             {
@@ -54,7 +49,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
                     ? DateTimeOffset.UtcNow
                     : (DateTimeOffset)ctx[ContextKeys.EnqueueTimeUtc];
 
-                var sequenceNumber = await messageSender.ScheduleMessageAsync(targetMessage, enqueueTimeUtc, tkn);
+                var sequenceNumber = await opt.Value.Sender.ScheduleMessageAsync(targetMessage, enqueueTimeUtc, tkn);
 
                 if (ctx.ContainsKey(ContextKeys.SequenceNumbers) == false)
                 {
@@ -76,7 +71,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
             }
             finally
             {
-                await messageSender.CloseAsync(tkn);
+                await opt.Value.Sender.CloseAsync(tkn);
             }
         }
     }

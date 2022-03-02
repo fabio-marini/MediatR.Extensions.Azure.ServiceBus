@@ -9,8 +9,8 @@ namespace MediatR.Extensions.Azure.ServiceBus
     {
         public virtual bool IsEnabled { get; set; }
 
-        public virtual Func<TMessage, PipelineContext, ServiceBusReceiver> Receiver { get; set; }
-        public virtual Func<TMessage, PipelineContext, ServiceBusSender> Sender { get; set; }
+        public virtual ServiceBusReceiver Receiver { get; set; }
+        public virtual ServiceBusSender Sender { get; set; }
         public virtual Func<TMessage, PipelineContext, ServiceBusMessage> Message { get; set; }
 
         // the event that is raised after the message is received (allows using the message to modify TMessage)

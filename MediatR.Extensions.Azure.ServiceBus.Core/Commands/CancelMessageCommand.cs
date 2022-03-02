@@ -33,9 +33,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 return;
             }
 
-            var messageSender = opt.Value.Sender?.Invoke(msg, ctx);
-
-            if (messageSender == null)
+            if (opt.Value.Sender == null)
             {
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
@@ -51,7 +49,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
                 var sequenceNumber = sequenceNumbers.Dequeue();
 
-                await messageSender.CancelScheduledMessageAsync(sequenceNumber, tkn);
+                await opt.Value.Sender.CancelScheduledMessageAsync(sequenceNumber, tkn);
 
                 log.LogDebug("Command {Command} completed", this.GetType().Name);
             }
@@ -63,7 +61,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
             }
             finally
             {
-                await messageSender.CloseAsync(tkn);
+                await opt.Value.Sender.CloseAsync(tkn);
             }
         }
     }
