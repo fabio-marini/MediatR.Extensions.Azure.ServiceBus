@@ -14,6 +14,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
         public static IServiceCollection AddSendMessageExtensions(this IServiceCollection services) => services.AddSendMessageExtensions<EchoRequest, EchoResponse>();
 
+        public static IServiceCollection AddScheduleMessageExtensions(this IServiceCollection services) => services.AddScheduleMessageExtensions<EchoRequest, EchoResponse>();
+
         public static IServiceCollection AddCancelMessageExtensions(this IServiceCollection services) => services.AddCancelMessageExtensions<EchoRequest, EchoResponse>();
 
         public static IServiceCollection AddReceiveMessageExtensions(this IServiceCollection services) => services.AddReceiveMessageExtensions<EchoRequest, EchoResponse>();
@@ -100,6 +102,46 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     var cmd = ActivatorUtilities.CreateInstance<SendMessageCommand<TResponse>>(sp, Options.Create(opt));
 
                     return ActivatorUtilities.CreateInstance<SendMessageResponseBehavior<TRequest, TResponse>>(sp, cmd);
+                })
+
+                ;
+        }
+
+        private static IServiceCollection AddScheduleMessageExtensions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        {
+            return services
+
+                .AddTransient<IRequestPreProcessor<TRequest>, ScheduleMessageRequestProcessor<TRequest>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<MessageOptions<TRequest>>>().Get("Processors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<ScheduleMessageCommand<TRequest>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<ScheduleMessageRequestProcessor<TRequest>>(sp, cmd);
+                })
+                .AddTransient<IRequestPostProcessor<TRequest, TResponse>, ScheduleMessageResponseProcessor<TRequest, TResponse>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<MessageOptions<TResponse>>>().Get("Processors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<ScheduleMessageCommand<TResponse>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<ScheduleMessageResponseProcessor<TRequest, TResponse>>(sp, cmd);
+                })
+                .AddTransient<IPipelineBehavior<TRequest, TResponse>, ScheduleMessageRequestBehavior<TRequest, TResponse>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<MessageOptions<TRequest>>>().Get("Behaviors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<ScheduleMessageCommand<TRequest>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<ScheduleMessageRequestBehavior<TRequest, TResponse>>(sp, cmd);
+                })
+                .AddTransient<IPipelineBehavior<TRequest, TResponse>, ScheduleMessageResponseBehavior<TRequest, TResponse>>(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptionsSnapshot<MessageOptions<TResponse>>>().Get("Behaviors");
+
+                    var cmd = ActivatorUtilities.CreateInstance<ScheduleMessageCommand<TResponse>>(sp, Options.Create(opt));
+
+                    return ActivatorUtilities.CreateInstance<ScheduleMessageResponseBehavior<TRequest, TResponse>>(sp, cmd);
                 })
 
                 ;

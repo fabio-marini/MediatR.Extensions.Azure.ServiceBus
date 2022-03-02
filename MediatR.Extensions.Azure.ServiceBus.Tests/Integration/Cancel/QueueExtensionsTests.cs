@@ -49,7 +49,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
                 .AddTransient<ILogger, TestOutputLogger>()
                 .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
                 .AddMessageOptions()
-                .AddSendMessageExtensions()
+                .AddScheduleMessageExtensions()
                 .AddScoped<PipelineContext>()
 
                 .BuildServiceProvider();

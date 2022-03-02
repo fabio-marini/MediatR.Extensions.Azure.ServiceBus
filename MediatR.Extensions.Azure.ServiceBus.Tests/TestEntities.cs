@@ -1,8 +1,9 @@
 ﻿namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
     // FIXME: BlobClient is a delegate, but table and queue clients are instances - what should SB topic and queue clients be?!?
-    // TODO: commands unit tests + docs + read migration guide @ https://tinyurl.com/yzkcucfv
+    // TODO: commands unit tests + docs
     // TODO: rename core project (drop core)
+    // TODO: change send commands to use default Message, i.e. serialize req using json...
 
     // TODO: list contoso/fabrikam examples (not integration tests, include some that use the DLQ)
 
