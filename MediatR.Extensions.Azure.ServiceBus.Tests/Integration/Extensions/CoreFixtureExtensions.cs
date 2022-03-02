@@ -12,7 +12,9 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
     public static class CoreFixtureExtensions
     {
-        public static IServiceCollection AddMessageOptions(this IServiceCollection services, Queue<long> sequenceNumbers = default) => services.AddMessageOptions<EchoRequest, EchoResponse>(sequenceNumbers);
+        public static IServiceCollection AddMessageOptions(this IServiceCollection services) => services.AddMessageOptions<EchoRequest, EchoResponse>();
+
+        public static IServiceCollection AddCancelOptions(this IServiceCollection services, DateTimeOffset enqueueTime, Queue<long> sequenceNumbers) => services.AddCancelOptions<EchoRequest, EchoResponse>(enqueueTime, sequenceNumbers);
 
         public static IServiceCollection AddSendMessageExtensions(this IServiceCollection services) => services.AddSendMessageExtensions<EchoRequest, EchoResponse>();
 
@@ -22,7 +24,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
         public static IServiceCollection AddReceiveMessageExtensions(this IServiceCollection services) => services.AddReceiveMessageExtensions<EchoRequest, EchoResponse>();
 
-        private static IServiceCollection AddMessageOptions<TRequest, TResponse>(this IServiceCollection services, Queue<long> sequenceNumbers = default) where TRequest : IRequest<TResponse>
+        private static IServiceCollection AddMessageOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
         {
             return services
 
@@ -33,6 +35,56 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.Receiver = svc.GetService<ServiceBusReceiver>();
                     opt.Sender = svc.GetService<ServiceBusSender>();
                     opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                }))
+                .Services
+
+                .AddOptions<MessageOptions<TResponse>>("Processors")
+                .Configure<IServiceProvider>((Action<MessageOptions<TResponse>, IServiceProvider>)((opt, svc) =>
+                {
+                    opt.IsEnabled = true;
+                    opt.Receiver = svc.GetService<ServiceBusReceiver>();
+                    opt.Sender = svc.GetService<ServiceBusSender>();
+                    opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                }))
+                .Services
+
+                .AddOptions<MessageOptions<TRequest>>("Behaviors")
+                .Configure<IServiceProvider>((Action<MessageOptions<TRequest>, IServiceProvider>)((opt, svc) =>
+                {
+                    opt.IsEnabled = true;
+                    opt.Receiver = svc.GetService<ServiceBusReceiver>();
+                    opt.Sender = svc.GetService<ServiceBusSender>();
+                    opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                }))
+                .Services
+
+                .AddOptions<MessageOptions<TResponse>>("Behaviors")
+                .Configure<IServiceProvider>((Action<MessageOptions<TResponse>, IServiceProvider>)((opt, svc) =>
+                {
+                    opt.IsEnabled = true;
+                    opt.Receiver = svc.GetService<ServiceBusReceiver>();
+                    opt.Sender = svc.GetService<ServiceBusSender>();
+                    opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                }))
+                .Services
+
+                ;
+        }
+
+        private static IServiceCollection AddCancelOptions<TRequest, TResponse>(this IServiceCollection services, DateTimeOffset enqueueTime, Queue<long> sequenceNumbers) where TRequest : IRequest<TResponse>
+        {
+            return services
+
+                .AddOptions<MessageOptions<TRequest>>("Processors")
+                .Configure<IServiceProvider>((Action<MessageOptions<TRequest>, IServiceProvider>)((opt, svc) =>
+                {
+                    opt.IsEnabled = true;
+                    opt.Receiver = svc.GetService<ServiceBusReceiver>();
+                    opt.Sender = svc.GetService<ServiceBusSender>();
+                    opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
+                    {
+                        ScheduledEnqueueTime = enqueueTime
+                    };
                     opt.Scheduled = (seq, msg, ctx, req) =>
                     {
                         sequenceNumbers.Enqueue(seq);
@@ -49,7 +101,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.IsEnabled = true;
                     opt.Receiver = svc.GetService<ServiceBusReceiver>();
                     opt.Sender = svc.GetService<ServiceBusSender>();
-                    opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                    opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
+                    {
+                        ScheduledEnqueueTime = enqueueTime
+                    };
                     opt.Scheduled = (seq, msg, ctx, req) =>
                     {
                         sequenceNumbers.Enqueue(seq);
@@ -66,7 +121,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.IsEnabled = true;
                     opt.Receiver = svc.GetService<ServiceBusReceiver>();
                     opt.Sender = svc.GetService<ServiceBusSender>();
-                    opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                    opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
+                    {
+                        ScheduledEnqueueTime = enqueueTime
+                    };
                     opt.Scheduled = (seq, msg, ctx, req) =>
                     {
                         sequenceNumbers.Enqueue(seq);
@@ -83,7 +141,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.IsEnabled = true;
                     opt.Receiver = svc.GetService<ServiceBusReceiver>();
                     opt.Sender = svc.GetService<ServiceBusSender>();
-                    opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                    opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)))
+                    {
+                        ScheduledEnqueueTime = enqueueTime
+                    };
                     opt.Scheduled = (seq, msg, ctx, req) =>
                     {
                         sequenceNumbers.Enqueue(seq);

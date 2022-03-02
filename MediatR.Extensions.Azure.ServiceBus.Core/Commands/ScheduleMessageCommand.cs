@@ -34,25 +34,27 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 return;
             }
 
+            var targetMessage = opt.Value.Message?.Invoke(msg, ctx) ?? new ServiceBusMessage(JsonConvert.SerializeObject(msg));
+
+            if (targetMessage.ScheduledEnqueueTime < DateTimeOffset.UtcNow)
+            {
+                log.LogDebug("Command {Command} found schedule enqueue time in the past, returning", this.GetType().Name);
+
+                return;
+            }
+
             if (opt.Value.Sender == null)
             {
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
 
-            var targetMessage = opt.Value.Message?.Invoke(msg, ctx) ?? new ServiceBusMessage(JsonConvert.SerializeObject(msg));
-
             try
             {
-                // retrieve enqueue time from context or default it 
-                var enqueueTime = (ctx == null || !ctx.ContainsKey(ContextKeys.EnqueueTimeUtc))
-                    ? DateTimeOffset.UtcNow
-                    : (DateTimeOffset)ctx[ContextKeys.EnqueueTimeUtc];
-
-                var sequenceNumber = await opt.Value.Sender.ScheduleMessageAsync(targetMessage, enqueueTime, tkn);
-
-                log.LogDebug("Command {Command} scheduled message {SequenceNumber}", this.GetType().Name, sequenceNumber);
+                var sequenceNumber = await opt.Value.Sender.ScheduleMessageAsync(targetMessage, targetMessage.ScheduledEnqueueTime, tkn);
 
                 await opt.Value.Scheduled?.Invoke(sequenceNumber, targetMessage, ctx, msg);
+
+                log.LogDebug("Command {Command} scheduled message {SequenceNumber}", this.GetType().Name, sequenceNumber);
             }
             catch (Exception ex)
             {

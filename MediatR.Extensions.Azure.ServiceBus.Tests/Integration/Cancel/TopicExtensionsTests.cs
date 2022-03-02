@@ -48,15 +48,11 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
                 .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
-                .AddMessageOptions(fix.TestTopic)
+                .AddCancelOptions(DateTimeOffset.UtcNow.AddMinutes(1), fix.TestTopic)
                 .AddScheduleMessageExtensions()
                 .AddScoped<PipelineContext>()
 
                 .BuildServiceProvider();
-
-            var ctx = serviceProvider.GetRequiredService<PipelineContext>();
-
-            //ctx.Add(ContextKeys.EnqueueTimeUtc, DateTimeOffset.UtcNow.AddSeconds(60));
 
             var med = serviceProvider.GetRequiredService<IMediator>();
 
@@ -64,10 +60,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
 
             res.Message.Should().Be(EchoRequest.Default.Message);
 
-            //ctx.Should().ContainKey(ContextKeys.SequenceNumber);
             fix.TestTopic.Should().HaveCount(4);
-
-            //fix.TestTopic = (Queue<long>)ctx[ContextKeys.SequenceNumber];
         }
 
         [Fact(DisplayName = "03. Topic has scheduled messages")]
@@ -83,15 +76,11 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
                 .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
-                .AddMessageOptions(fix.TestTopic)
+                .AddCancelOptions(DateTimeOffset.UtcNow.AddMinutes(1), fix.TestTopic)
                 .AddCancelMessageExtensions()
                 .AddScoped<PipelineContext>()
 
                 .BuildServiceProvider();
-
-            //var ctx = serviceProvider.GetRequiredService<PipelineContext>();
-
-            //ctx.Add(ContextKeys.SequenceNumber, fix.TestTopic);
 
             var med = serviceProvider.GetRequiredService<IMediator>();
 

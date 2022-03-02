@@ -1,12 +1,5 @@
-﻿using MediatR.Extensions.Abstractions;
-using System;
-using System.Collections.Generic;
-
-namespace MediatR.Extensions.Azure.ServiceBus.Tests
+﻿namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
-    // FIXME: use message ScheduledEnqueueTime instead of EnqueueTime from context?
-
-    // TODO: use ScheduleContext with strongly typed properties intead of using dictionary?
     // TODO: how to cancel a specific message - create pipeline that schedules 4 messages, but only cancels 2 specific ones...
 
     // TODO: manage the list of messages to be cancelled (i.e. seq numbers) using separate components in the pipeline
@@ -25,12 +18,6 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
     // TODO: rename core project (drop core) + shorten solution names (drop MediatR.Extensions)?
 
     // TODO: list contoso/fabrikam examples (include DLQ, optional message delegate)
-
-    public class ScheduleContext : PipelineContext
-    {
-        public DateTimeOffset? EnqueueTimeUtc { get; set; }
-        public Queue<long> SequenceNumbers { get; set; }
-    }
 
     public class TestEntities
     {
