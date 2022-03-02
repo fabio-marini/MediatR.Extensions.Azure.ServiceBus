@@ -4,13 +4,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
     public static class CoreFixtureExtensions
     {
-        public static IServiceCollection AddMessageOptions(this IServiceCollection services) => services.AddMessageOptions<EchoRequest, EchoResponse>();
+        public static IServiceCollection AddMessageOptions(this IServiceCollection services, Queue<long> sequenceNumbers = default) => services.AddMessageOptions<EchoRequest, EchoResponse>(sequenceNumbers);
 
         public static IServiceCollection AddSendMessageExtensions(this IServiceCollection services) => services.AddSendMessageExtensions<EchoRequest, EchoResponse>();
 
@@ -20,7 +22,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 
         public static IServiceCollection AddReceiveMessageExtensions(this IServiceCollection services) => services.AddReceiveMessageExtensions<EchoRequest, EchoResponse>();
 
-        private static IServiceCollection AddMessageOptions<TRequest, TResponse>(this IServiceCollection services) where TRequest : IRequest<TResponse>
+        private static IServiceCollection AddMessageOptions<TRequest, TResponse>(this IServiceCollection services, Queue<long> sequenceNumbers = default) where TRequest : IRequest<TResponse>
         {
             return services
 
@@ -31,6 +33,13 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.Receiver = svc.GetService<ServiceBusReceiver>();
                     opt.Sender = svc.GetService<ServiceBusSender>();
                     opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                    opt.Scheduled = (seq, msg, ctx, req) =>
+                    {
+                        sequenceNumbers.Enqueue(seq);
+
+                        return Task.CompletedTask;
+                    };
+                    opt.SequenceNumber = (ctx, msg) => sequenceNumbers.Dequeue();
                 }))
                 .Services
 
@@ -41,6 +50,13 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.Receiver = svc.GetService<ServiceBusReceiver>();
                     opt.Sender = svc.GetService<ServiceBusSender>();
                     opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                    opt.Scheduled = (seq, msg, ctx, req) =>
+                    {
+                        sequenceNumbers.Enqueue(seq);
+
+                        return Task.CompletedTask;
+                    };
+                    opt.SequenceNumber = (ctx, msg) => sequenceNumbers.Dequeue();
                 }))
                 .Services
 
@@ -51,6 +67,13 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.Receiver = svc.GetService<ServiceBusReceiver>();
                     opt.Sender = svc.GetService<ServiceBusSender>();
                     opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                    opt.Scheduled = (seq, msg, ctx, req) =>
+                    {
+                        sequenceNumbers.Enqueue(seq);
+
+                        return Task.CompletedTask;
+                    };
+                    opt.SequenceNumber = (ctx, msg) => sequenceNumbers.Dequeue();
                 }))
                 .Services
 
@@ -61,6 +84,13 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
                     opt.Receiver = svc.GetService<ServiceBusReceiver>();
                     opt.Sender = svc.GetService<ServiceBusSender>();
                     opt.Message = (req, ctx) => new ServiceBusMessage(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(req)));
+                    opt.Scheduled = (seq, msg, ctx, req) =>
+                    {
+                        sequenceNumbers.Enqueue(seq);
+
+                        return Task.CompletedTask;
+                    };
+                    opt.SequenceNumber = (ctx, msg) => sequenceNumbers.Dequeue();
                 }))
                 .Services
 

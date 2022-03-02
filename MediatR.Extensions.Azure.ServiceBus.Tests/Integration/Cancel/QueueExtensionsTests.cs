@@ -48,11 +48,16 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
                 .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
-                .AddMessageOptions()
+                .AddMessageOptions(fix.TestQueue)
                 .AddScheduleMessageExtensions()
                 .AddScoped<PipelineContext>()
 
                 .BuildServiceProvider();
+
+            //var snd = serviceProvider.GetRequiredService<ServiceBusSender>();
+
+            //await snd.CancelScheduledMessageAsync(1);
+            //await snd.CancelScheduledMessageAsync(4);
 
             var ctx = serviceProvider.GetRequiredService<PipelineContext>();
 
@@ -64,10 +69,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
 
             res.Message.Should().Be(EchoRequest.Default.Message);
 
-            ctx.Should().ContainKey(ContextKeys.SequenceNumbers);
-            ctx[ContextKeys.SequenceNumbers].As<Queue<long>>().Should().HaveCount(4);
+            //ctx.Should().ContainKey(ContextKeys.SequenceNumber);
+            fix.TestQueue.Should().HaveCount(4);
 
-            fix.TestQueue = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
+            //fix.TestQueue = (Queue<long>)ctx[ContextKeys.SequenceNumber];
         }
 
         [Fact(DisplayName = "03. Queues have messages")]
@@ -83,7 +88,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
                 .AddTransient<ITestOutputHelper>(sp => log)
                 .AddTransient<ILogger, TestOutputLogger>()
                 .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
-                .AddMessageOptions()
+                .AddMessageOptions(fix.TestQueue)
                 .AddCancelMessageExtensions()
                 .AddScoped<PipelineContext>()
 
@@ -91,7 +96,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
 
             var ctx = serviceProvider.GetRequiredService<PipelineContext>();
 
-            ctx.Add(ContextKeys.SequenceNumbers, fix.TestQueue);
+            //ctx.Add(ContextKeys.SequenceNumber, fix.TestQueue);
 
             var med = serviceProvider.GetRequiredService<IMediator>();
 

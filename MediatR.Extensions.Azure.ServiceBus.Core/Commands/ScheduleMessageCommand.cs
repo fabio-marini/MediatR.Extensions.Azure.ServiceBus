@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -44,24 +43,16 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
             try
             {
-                // retrieve enqueue time from context or default it and schedule message
-                var enqueueTimeUtc = (ctx == null || !ctx.ContainsKey(ContextKeys.EnqueueTimeUtc))
+                // retrieve enqueue time from context or default it 
+                var enqueueTime = (ctx == null || !ctx.ContainsKey(ContextKeys.EnqueueTimeUtc))
                     ? DateTimeOffset.UtcNow
                     : (DateTimeOffset)ctx[ContextKeys.EnqueueTimeUtc];
 
-                var sequenceNumber = await opt.Value.Sender.ScheduleMessageAsync(targetMessage, enqueueTimeUtc, tkn);
+                var sequenceNumber = await opt.Value.Sender.ScheduleMessageAsync(targetMessage, enqueueTime, tkn);
 
-                if (ctx.ContainsKey(ContextKeys.SequenceNumbers) == false)
-                {
-                    ctx.Add(ContextKeys.SequenceNumbers, new Queue<long>());
-                }
+                log.LogDebug("Command {Command} scheduled message {SequenceNumber}", this.GetType().Name, sequenceNumber);
 
-                // add scheduled message sequence number to context if required for cancellation
-                var sequenceNumbers = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
-
-                sequenceNumbers.Enqueue(sequenceNumber);
-
-                log.LogDebug("Command {Command} completed", this.GetType().Name);
+                await opt.Value.Scheduled?.Invoke(sequenceNumber, targetMessage, ctx, msg);
             }
             catch (Exception ex)
             {

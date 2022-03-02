@@ -4,7 +4,15 @@ using System.Collections.Generic;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
+    // FIXME: use message ScheduledEnqueueTime instead of EnqueueTime from context?
+
     // TODO: use ScheduleContext with strongly typed properties intead of using dictionary?
+    // TODO: how to cancel a specific message - create pipeline that schedules 4 messages, but only cancels 2 specific ones...
+
+    // TODO: manage the list of messages to be cancelled (i.e. seq numbers) using separate components in the pipeline
+    //       - scenario 1: schedule and cancel in the same pipeline - can use context
+    //       - scenario 2: schedule and cancel in different pipelines - use persistence
+    //       - scenario 3: cancel scheduled messages based on request (delete from persistence store or cancel message)
 
     // TODO: update storage extension commands and tests to use Invoke() on delegates?
 

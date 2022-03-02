@@ -33,25 +33,25 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 return;
             }
 
+            var sequenceNumber = opt.Value.SequenceNumber?.Invoke(ctx, msg);
+
+            if (sequenceNumber.HasValue == false)
+            {
+                log.LogDebug("Command {Command} found no scheduled messages to cancel, returning", this.GetType().Name);
+
+                return;
+            }
+
             if (opt.Value.Sender == null)
             {
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
 
-            if (ctx == null || ctx.ContainsKey(ContextKeys.SequenceNumbers) == false)
-            {
-                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Context");
-            }
-
             try
             {
-                var sequenceNumbers = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
+                await opt.Value.Sender.CancelScheduledMessageAsync(sequenceNumber.Value, tkn);
 
-                var sequenceNumber = sequenceNumbers.Dequeue();
-
-                await opt.Value.Sender.CancelScheduledMessageAsync(sequenceNumber, tkn);
-
-                log.LogDebug("Command {Command} completed", this.GetType().Name);
+                log.LogDebug("Command {Command} cancelled scheduled message {SequenceNumber}", this.GetType().Name, sequenceNumber.Value);
             }
             catch (Exception ex)
             {
