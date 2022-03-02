@@ -1,35 +1,37 @@
 ﻿using Azure;
-using Azure.Storage.Queues;
-using Azure.Storage.Queues.Models;
+using Azure.Messaging.ServiceBus;
 using FluentAssertions;
 using MediatR.Extensions.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace MediatR.Extensions.Azure.Storage.Tests.Commands.Queues
+namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
     public class SendMessageCommandTests
     {
         private readonly IServiceProvider svc;
-        private readonly Mock<QueueOptions<EchoRequest>> opt;
-        private readonly Mock<QueueClient> que;
+        private readonly Mock<MessageOptions<EchoRequest>> opt;
+        private readonly Mock<ServiceBusSender> snd;
 
         private readonly SendMessageCommand<EchoRequest> cmd;
 
         public SendMessageCommandTests()
         {
-            opt = new Mock<QueueOptions<EchoRequest>>();
-            que = new Mock<QueueClient>("UseDevelopmentStorage=true", "queue1");
+            opt = new Mock<MessageOptions<EchoRequest>>();
+            snd = new Mock<ServiceBusSender>();
 
             svc = new ServiceCollection()
 
                 .AddTransient<SendMessageCommand<EchoRequest>>()
-                .AddTransient<IOptions<QueueOptions<EchoRequest>>>(sp => Options.Create(opt.Object))
+                .AddTransient<IOptions<MessageOptions<EchoRequest>>>(sp => Options.Create(opt.Object))
 
                 .BuildServiceProvider();
 
@@ -42,8 +44,8 @@ namespace MediatR.Extensions.Azure.Storage.Tests.Commands.Queues
             await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.QueueClient, Times.Never);
-            opt.VerifyGet(m => m.QueueMessage, Times.Never);
+            opt.VerifyGet(m => m.Sender, Times.Never);
+            opt.VerifyGet(m => m.Message, Times.Never);
         }
 
         [Fact(DisplayName = "Command is cancelled")]
@@ -58,7 +60,7 @@ namespace MediatR.Extensions.Azure.Storage.Tests.Commands.Queues
             opt.VerifyGet(m => m.IsEnabled, Times.Never);
         }
 
-        [Fact(DisplayName = "QueueClient is not specified")]
+        [Fact(DisplayName = "Sender is not specified")]
         public async Task Test3()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
@@ -68,79 +70,77 @@ namespace MediatR.Extensions.Azure.Storage.Tests.Commands.Queues
             await act.Should().ThrowAsync<ArgumentNullException>();
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.QueueClient, Times.Once);
-            opt.VerifyGet(m => m.QueueMessage, Times.Never);
+            opt.VerifyGet(m => m.Sender, Times.Once);
+            opt.VerifyGet(m => m.Message, Times.Never);
         }
 
-        [Fact(DisplayName = "Command uses default QueueMessage")]
+        [Fact(DisplayName = "Command uses default Message")]
         public async Task Test4()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
-            opt.SetupProperty(m => m.QueueClient, que.Object);
-            opt.SetupProperty(m => m.QueueMessage, null);
+            opt.SetupProperty(m => m.Sender, snd.Object);
+            opt.SetupProperty(m => m.Message, null);
 
-            var res = new Mock<Response>();
-            res.SetupGet(r => r.Status).Returns(200);
-
-            que.Setup(m => m.SendMessageAsync(It.IsAny<BinaryData>(), opt.Object.Visibility, opt.Object.TimeToLive, CancellationToken.None))
-                .ReturnsAsync(Response.FromValue<SendReceipt>(default, res.Object));
+            snd.Setup(m => m.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None)).Returns(Task.CompletedTask);
 
             await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.QueueClient, Times.Exactly(2));
-            opt.VerifyGet(m => m.QueueMessage, Times.Exactly(2));
+            opt.VerifyGet(m => m.Sender, Times.Exactly(3));
+            opt.VerifyGet(m => m.Message, Times.Exactly(1));
 
-            opt.VerifySet(m => m.QueueMessage = It.IsAny<Func<EchoRequest, PipelineContext, BinaryData>>(), Times.Once);
+            var capturedMessages = new List<ServiceBusMessage>();
 
-            opt.Verify(m => m.QueueClient.SendMessageAsync(It.IsAny<BinaryData>(), opt.Object.Visibility, opt.Object.TimeToLive, CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.SendMessageAsync(Capture.In(capturedMessages), CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
+
+            var echoRequest = JsonConvert.DeserializeObject<EchoRequest>(capturedMessages.Single().Body.ToString());
+            
+            echoRequest.Message.Should().Be(EchoRequest.Default.Message);
         }
 
-        [Fact(DisplayName = "Command uses specified QueueMessage")]
+        [Fact(DisplayName = "Command uses specified Message")]
         public async Task Test5()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
-            opt.SetupProperty(m => m.QueueClient, que.Object);
-            opt.SetupProperty(m => m.QueueMessage, (cmd, ctx) => BinaryData.FromString("Hello world"));
+            opt.SetupProperty(m => m.Sender, snd.Object);
+            opt.SetupProperty(m => m.Message, (cmd, ctx) => new ServiceBusMessage(BinaryData.FromString("Hello world")));
 
-            var res = new Mock<Response>();
-            res.SetupGet(r => r.Status).Returns(200);
-
-            que.Setup(m => m.SendMessageAsync(It.IsAny<BinaryData>(), opt.Object.Visibility, opt.Object.TimeToLive, CancellationToken.None))
-                .ReturnsAsync(Response.FromValue<SendReceipt>(default, res.Object));
+            snd.Setup(m => m.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None)).Returns(Task.CompletedTask);
 
             await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.QueueClient, Times.Exactly(2));
-            opt.VerifyGet(m => m.QueueMessage, Times.Exactly(2));
+            opt.VerifyGet(m => m.Sender, Times.Exactly(3));
+            opt.VerifyGet(m => m.Message, Times.Exactly(1));
 
-            opt.VerifySet(m => m.QueueMessage = It.IsAny<Func<EchoRequest, PipelineContext, BinaryData>>(), Times.Never);
+            var capturedMessages = new List<ServiceBusMessage>();
 
-            opt.Verify(m => m.QueueClient.SendMessageAsync(It.IsAny<BinaryData>(), opt.Object.Visibility, opt.Object.TimeToLive, CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.SendMessageAsync(Capture.In(capturedMessages), CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
+
+            capturedMessages.Single().Body.ToString().Should().Be("Hello world");
         }
 
         [Fact(DisplayName = "Command throws CommandException")]
         public async Task Test6()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
-            opt.SetupProperty(m => m.QueueClient, que.Object);
-            opt.SetupProperty(m => m.QueueMessage, (cmd, ctx) => BinaryData.FromString("Hello world"));
+            opt.SetupProperty(m => m.Sender, snd.Object);
+            opt.SetupProperty(m => m.Message, (cmd, ctx) => new ServiceBusMessage(BinaryData.FromString("Hello world")));
 
-            que.Setup(m => m.SendMessageAsync(It.IsAny<BinaryData>(), opt.Object.Visibility, opt.Object.TimeToLive, CancellationToken.None))
-                .ThrowsAsync(new ArgumentNullException());
+            snd.Setup(m => m.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None)).ThrowsAsync(new ArgumentNullException());
 
             Func<Task> act = async () => await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             await act.Should().ThrowAsync<CommandException>();
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.QueueClient, Times.Exactly(2));
-            opt.VerifyGet(m => m.QueueMessage, Times.Exactly(2));
+            opt.VerifyGet(m => m.Sender, Times.Exactly(3));
+            opt.VerifyGet(m => m.Message, Times.Exactly(1));
 
-            opt.VerifySet(m => m.QueueMessage = It.IsAny<Func<EchoRequest, PipelineContext, BinaryData>>(), Times.Never);
-
-            opt.Verify(m => m.QueueClient.SendMessageAsync(It.IsAny<BinaryData>(), opt.Object.Visibility, opt.Object.TimeToLive, CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
         }
     }
 }

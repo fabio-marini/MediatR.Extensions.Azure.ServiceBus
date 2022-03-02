@@ -6,6 +6,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
     // TODO: use ScheduleContext with strongly typed properties intead of using dictionary?
 
+    // TODO: update storage extension commands and tests to use Invoke() on delegates?
+
     // TODO: test cancel with different enqueue times
     // TODO: integration test pattern - how to execute entire test with different parameters, i.e.
     //       steps 1/2/3/4/5 with param1, then steps 1/2/3/4/5 with param2 - class fixture or inherit from a base class?
