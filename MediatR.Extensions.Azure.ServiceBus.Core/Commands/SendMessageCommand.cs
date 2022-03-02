@@ -21,10 +21,9 @@ namespace MediatR.Extensions.Azure.ServiceBus
             this.log = log ?? NullLogger.Instance;
         }
 
-        public virtual async Task ExecuteAsync(TMessage message, CancellationToken cancellationToken)
+        public virtual async Task ExecuteAsync(TMessage msg, CancellationToken tkn)
         {
-            // TODO: use default Message, i.e. serialize req using json...
-            cancellationToken.ThrowIfCancellationRequested();
+            tkn.ThrowIfCancellationRequested();
 
             if (opt.Value.IsEnabled == false)
             {
@@ -33,33 +32,23 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 return;
             }
 
-            if (opt.Value.Sender == null)
-            {
-                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
-            }
-
-            if (opt.Value.Message == null)
-            {
-                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Message");
-            }
-
-            var messageSender = opt.Value.Sender(message, ctx);
+            var messageSender = opt.Value.Sender?.Invoke(msg, ctx);
 
             if (messageSender == null)
             {
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
 
-            var msg = opt.Value.Message(message, ctx);
+            var targetMessage = opt.Value.Message?.Invoke(msg, ctx);
 
-            if (msg == null)
+            if (targetMessage == null)
             {
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Message");
             }
 
             try
             {
-                await messageSender.SendMessageAsync(msg, cancellationToken);
+                await messageSender.SendMessageAsync(targetMessage, tkn);
 
                 log.LogDebug("Command {Command} completed", this.GetType().Name);
             }
@@ -71,7 +60,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
             }
             finally
             {
-                await messageSender.CloseAsync();
+                await messageSender.CloseAsync(tkn);
             }
         }
     }

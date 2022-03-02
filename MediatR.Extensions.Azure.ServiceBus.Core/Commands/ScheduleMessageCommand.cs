@@ -22,9 +22,9 @@ namespace MediatR.Extensions.Azure.ServiceBus
             this.log = log ?? NullLogger.Instance;
         }
 
-        public virtual async Task ExecuteAsync(TMessage message, CancellationToken cancellationToken)
+        public virtual async Task ExecuteAsync(TMessage msg, CancellationToken tkn)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            tkn.ThrowIfCancellationRequested();
 
             if (opt.Value.IsEnabled == false)
             {
@@ -33,49 +33,38 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 return;
             }
 
-            if (opt.Value.Sender == null)
-            {
-                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
-            }
-
-            if (opt.Value.Message == null)
-            {
-                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Message");
-            }
-
-            var messageSender = opt.Value.Sender(message, ctx);
+            var messageSender = opt.Value.Sender?.Invoke(msg, ctx);
 
             if (messageSender == null)
             {
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
 
-            var msg = opt.Value.Message(message, ctx);
+            var targetMessage = opt.Value.Message?.Invoke(msg, ctx);
 
-            if (msg == null)
+            if (targetMessage == null)
             {
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Message");
             }
 
             try
             {
-                if (ctx != null && ctx.ContainsKey(ContextKeys.EnqueueTimeUtc))
+                // retrieve enqueue time from context or default it and schedule message
+                var enqueueTimeUtc = (ctx == null || !ctx.ContainsKey(ContextKeys.EnqueueTimeUtc))
+                    ? DateTimeOffset.UtcNow
+                    : (DateTimeOffset)ctx[ContextKeys.EnqueueTimeUtc];
+
+                var sequenceNumber = await messageSender.ScheduleMessageAsync(targetMessage, enqueueTimeUtc, tkn);
+
+                if (ctx.ContainsKey(ContextKeys.SequenceNumbers) == false)
                 {
-                    // retrieve enqueue time from context and schedule message
-                    var enqueueTimeUtc = (DateTimeOffset)ctx[ContextKeys.EnqueueTimeUtc];
-
-                    var sequenceNumber = await messageSender.ScheduleMessageAsync(msg, enqueueTimeUtc, cancellationToken);
-
-                    if (ctx.ContainsKey(ContextKeys.SequenceNumbers) == false)
-                    {
-                        ctx.Add(ContextKeys.SequenceNumbers, new Queue<long>());
-                    }
-
-                    // add scheduled message sequence number to context if required for cancellation
-                    var sequenceNumbers = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
-
-                    sequenceNumbers.Enqueue(sequenceNumber);
+                    ctx.Add(ContextKeys.SequenceNumbers, new Queue<long>());
                 }
+
+                // add scheduled message sequence number to context if required for cancellation
+                var sequenceNumbers = (Queue<long>)ctx[ContextKeys.SequenceNumbers];
+
+                sequenceNumbers.Enqueue(sequenceNumber);
 
                 log.LogDebug("Command {Command} completed", this.GetType().Name);
             }
@@ -85,8 +74,10 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
                 throw new CommandException($"Command {this.GetType().Name} failed, see inner exception for details", ex);
             }
-
-            await messageSender.CloseAsync();
+            finally
+            {
+                await messageSender.CloseAsync(tkn);
+            }
         }
     }
 }

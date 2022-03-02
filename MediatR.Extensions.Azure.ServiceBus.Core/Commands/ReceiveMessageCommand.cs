@@ -21,9 +21,9 @@ namespace MediatR.Extensions.Azure.ServiceBus
             this.log = log ?? NullLogger.Instance;
         }
 
-        public virtual async Task ExecuteAsync(TMessage message, CancellationToken cancellationToken)
+        public virtual async Task ExecuteAsync(TMessage msg, CancellationToken tkn)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            tkn.ThrowIfCancellationRequested();
 
             if (opt.Value.IsEnabled == false)
             {
@@ -32,12 +32,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 return;
             }
 
-            if (opt.Value.Receiver == null)
-            {
-                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Receiver");
-            }
-
-            var messageReceiver = opt.Value.Receiver(message, ctx);
+            var messageReceiver = opt.Value.Receiver?.Invoke(msg, ctx);
 
             if (messageReceiver == null)
             {
@@ -46,11 +41,11 @@ namespace MediatR.Extensions.Azure.ServiceBus
             
             try
             {
-                var msg = await messageReceiver.ReceiveMessageAsync();
+                var targetMessage = await messageReceiver.ReceiveMessageAsync(cancellationToken: tkn);
 
                 if (opt.Value.Received != null)
                 {
-                    await opt.Value.Received(msg, ctx, message);
+                    await opt.Value.Received(targetMessage, ctx, msg);
                 }
 
                 log.LogDebug("Command {Command} completed", this.GetType().Name);
@@ -61,8 +56,10 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
                 throw new CommandException($"Command {this.GetType().Name} failed, see inner exception for details", ex);
             }
-
-            await messageReceiver.CloseAsync();
+            finally
+            {
+                await messageReceiver.CloseAsync(tkn);
+            }
         }
     }
 }

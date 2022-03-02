@@ -22,9 +22,9 @@ namespace MediatR.Extensions.Azure.ServiceBus
             this.log = log ?? NullLogger.Instance;
         }
 
-        public virtual async Task ExecuteAsync(TMessage message, CancellationToken cancellationToken)
+        public virtual async Task ExecuteAsync(TMessage msg, CancellationToken tkn)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            tkn.ThrowIfCancellationRequested();
 
             if (opt.Value.IsEnabled == false)
             {
@@ -33,12 +33,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 return;
             }
 
-            if (opt.Value.Sender == null)
-            {
-                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
-            }
-
-            var messageSender = opt.Value.Sender(message, ctx);
+            var messageSender = opt.Value.Sender?.Invoke(msg, ctx);
 
             if (messageSender == null)
             {
@@ -56,7 +51,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
                 var sequenceNumber = sequenceNumbers.Dequeue();
 
-                await messageSender.CancelScheduledMessageAsync(sequenceNumber);
+                await messageSender.CancelScheduledMessageAsync(sequenceNumber, tkn);
 
                 log.LogDebug("Command {Command} completed", this.GetType().Name);
             }
@@ -65,6 +60,10 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 log.LogDebug(ex, "Command {Command} failed with message: {Message}", this.GetType().Name, ex.Message);
 
                 throw new CommandException($"Command {this.GetType().Name} failed, see inner exception for details", ex);
+            }
+            finally
+            {
+                await messageSender.CloseAsync(tkn);
             }
         }
     }
