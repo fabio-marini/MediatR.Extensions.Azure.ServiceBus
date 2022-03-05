@@ -1,19 +1,21 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Authors>Fabio Marini</Authors>
-    <Description>MediatR extensions for Azure Service Bus topics and subscriptions</Description>
+    <Description>MediatR extensions for Azure Service Bus</Description>
     <PackageVersion>1.0.0</PackageVersion>
     <PackageProjectUrl>https://github.com/fabio-marini/MediatR.Extensions.Azure.ServiceBus</PackageProjectUrl>
     <RepositoryUrl>https://github.com/fabio-marini/MediatR.Extensions.Azure.ServiceBus</RepositoryUrl>
+    <AssemblyName>MediatR.Extensions.Azure.ServiceBus</AssemblyName>
+    <RootNamespace>MediatR.Extensions.Azure.ServiceBus</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.0.0" />
+
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.6.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="MediatR.Extensions.Abstractions" Version="1.0.0" />
-    <PackageReference Include="Polly" Version="7.2.3" />
   </ItemGroup>
 
 </Project>

@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32002.261
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MediatR.Extensions.Azure.ServiceBus.Tests", "MediatR.Extensions.Azure.ServiceBus.Tests\MediatR.Extensions.Azure.ServiceBus.Tests.csproj", "{AB31A199-F634-4965-9102-4DB748E0DDE3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.ServiceBus.Tests", "Azure.ServiceBus.Tests\Azure.ServiceBus.Tests.csproj", "{AB31A199-F634-4965-9102-4DB748E0DDE3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MediatR.Extensions.Azure.ServiceBus.Core", "MediatR.Extensions.Azure.ServiceBus.Core\MediatR.Extensions.Azure.ServiceBus.Core.csproj", "{D6C02C06-6A04-4D61-8A73-AE7E0A66C3F9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.ServiceBus", "Azure.ServiceBus\Azure.ServiceBus.csproj", "{D6C02C06-6A04-4D61-8A73-AE7E0A66C3F9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
