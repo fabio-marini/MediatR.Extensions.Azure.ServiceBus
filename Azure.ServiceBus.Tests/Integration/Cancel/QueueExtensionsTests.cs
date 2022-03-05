@@ -63,8 +63,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
             fix.TestQueue.Should().HaveCount(4);
         }
 
-        [Fact(DisplayName = "03. Queues have messages")]
-        public async Task Step03() => await managementFixture.QueueHasMessages(TestEntities.QueuePath, 4);
+        [Fact(DisplayName = "03. Queue has scheduled messages")]
+        public async Task Step03() => await managementFixture.QueueHasScheduledMessages(TestEntities.QueuePath, 4);
 
         [Fact(DisplayName = "04. Cancel extensions are executed")]
         public async Task Step04()
