@@ -33,6 +33,11 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 return;
             }
 
+            if (opt.Value.Sender == null)
+            {
+                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
+            }
+
             var sequenceNumber = opt.Value.SequenceNumber?.Invoke(ctx, msg);
 
             if (sequenceNumber.HasValue == false)
@@ -40,11 +45,6 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 log.LogDebug("Command {Command} found no scheduled messages to cancel, returning", this.GetType().Name);
 
                 return;
-            }
-
-            if (opt.Value.Sender == null)
-            {
-                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
 
             try

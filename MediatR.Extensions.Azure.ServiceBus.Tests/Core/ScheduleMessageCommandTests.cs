@@ -1,6 +1,5 @@
 ﻿using Azure.Messaging.ServiceBus;
 using FluentAssertions;
-using MediatR.Extensions.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -14,27 +13,27 @@ using Xunit;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
-    public class SendMessageCommandTests
+    public class ScheduleMessageCommandTests
     {
         private readonly IServiceProvider svc;
         private readonly Mock<MessageOptions<EchoRequest>> opt;
         private readonly Mock<ServiceBusSender> snd;
 
-        private readonly SendMessageCommand<EchoRequest> cmd;
+        private readonly ScheduleMessageCommand<EchoRequest> cmd;
 
-        public SendMessageCommandTests()
+        public ScheduleMessageCommandTests()
         {
             opt = new Mock<MessageOptions<EchoRequest>>();
             snd = new Mock<ServiceBusSender>();
 
             svc = new ServiceCollection()
 
-                .AddTransient<SendMessageCommand<EchoRequest>>()
+                .AddTransient<ScheduleMessageCommand<EchoRequest>>()
                 .AddTransient<IOptions<MessageOptions<EchoRequest>>>(sp => Options.Create(opt.Object))
 
                 .BuildServiceProvider();
 
-            cmd = svc.GetRequiredService<SendMessageCommand<EchoRequest>>();
+            cmd = svc.GetRequiredService<ScheduleMessageCommand<EchoRequest>>();
         }
 
         [Fact(DisplayName = "Command is disabled")]
@@ -80,21 +79,24 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             opt.SetupProperty(m => m.Sender, snd.Object);
             opt.SetupProperty(m => m.Message, null);
 
-            snd.Setup(m => m.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None)).Returns(Task.CompletedTask);
+            snd.Setup(m => m.ScheduleMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<DateTimeOffset>(), CancellationToken.None)).Returns(Task.FromResult(1L));
 
             await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
             opt.VerifyGet(m => m.Sender, Times.Exactly(3));
             opt.VerifyGet(m => m.Message, Times.Exactly(1));
+            opt.VerifyGet(m => m.Scheduled, Times.Once);
 
             var capturedMessages = new List<ServiceBusMessage>();
 
-            opt.Verify(m => m.Sender.SendMessageAsync(Capture.In(capturedMessages), CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.ScheduleMessageAsync(Capture.In(capturedMessages), It.IsAny<DateTimeOffset>(), CancellationToken.None), Times.Once);
             opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
 
+            capturedMessages.Single().ScheduledEnqueueTime.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(10));
+
             var echoRequest = JsonConvert.DeserializeObject<EchoRequest>(capturedMessages.Single().Body.ToString());
-            
+
             echoRequest.Message.Should().Be(EchoRequest.Default.Message);
         }
 
@@ -103,43 +105,48 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         {
             opt.SetupProperty(m => m.IsEnabled, true);
             opt.SetupProperty(m => m.Sender, snd.Object);
-            opt.SetupProperty(m => m.Message, (cmd, ctx) => new ServiceBusMessage(BinaryData.FromString("Hello world")));
+            opt.SetupProperty(m => m.Message, (cmd, ctx) => new ServiceBusMessage(BinaryData.FromString("Hello world"))
+            {
+                ScheduledEnqueueTime = DateTimeOffset.UtcNow.AddMinutes(10)
+            });
 
-            snd.Setup(m => m.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None)).Returns(Task.CompletedTask);
+            snd.Setup(m => m.ScheduleMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<DateTimeOffset>(), CancellationToken.None)).Returns(Task.FromResult(1L));
 
             await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
             opt.VerifyGet(m => m.Sender, Times.Exactly(3));
             opt.VerifyGet(m => m.Message, Times.Exactly(1));
+            opt.VerifyGet(m => m.Scheduled, Times.Once);
 
             var capturedMessages = new List<ServiceBusMessage>();
 
-            opt.Verify(m => m.Sender.SendMessageAsync(Capture.In(capturedMessages), CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.ScheduleMessageAsync(Capture.In(capturedMessages), It.IsAny<DateTimeOffset>(), CancellationToken.None), Times.Once);
             opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
+
+            capturedMessages.Single().ScheduledEnqueueTime.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromMinutes(10));
 
             capturedMessages.Single().Body.ToString().Should().Be("Hello world");
         }
 
-        [Fact(DisplayName = "Command throws CommandException")]
+        [Fact(DisplayName = "Message enqueue time is in the past")]
         public async Task Test6()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
             opt.SetupProperty(m => m.Sender, snd.Object);
             opt.SetupProperty(m => m.Message, (cmd, ctx) => new ServiceBusMessage(BinaryData.FromString("Hello world")));
 
-            snd.Setup(m => m.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None)).ThrowsAsync(new ArgumentNullException());
+            snd.Setup(m => m.ScheduleMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<DateTimeOffset>(), CancellationToken.None)).Returns(Task.FromResult(1L));
 
-            Func<Task> act = async () => await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
-
-            await act.Should().ThrowAsync<CommandException>();
+            await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.Sender, Times.Exactly(3));
-            opt.VerifyGet(m => m.Message, Times.Exactly(1));
+            opt.VerifyGet(m => m.Sender, Times.Once);
+            opt.VerifyGet(m => m.Message, Times.Once);
+            opt.VerifyGet(m => m.Scheduled, Times.Never);
 
-            opt.Verify(m => m.Sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None), Times.Once);
-            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.ScheduleMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<DateTimeOffset>(), CancellationToken.None), Times.Never);
+            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Never);
         }
     }
 }

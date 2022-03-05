@@ -1,6 +1,5 @@
 ﻿using Azure.Messaging.ServiceBus;
 using FluentAssertions;
-using MediatR.Extensions.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -14,27 +13,27 @@ using Xunit;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
 {
-    public class SendMessageCommandTests
+    public class CancelMessageCommandTests
     {
         private readonly IServiceProvider svc;
         private readonly Mock<MessageOptions<EchoRequest>> opt;
         private readonly Mock<ServiceBusSender> snd;
 
-        private readonly SendMessageCommand<EchoRequest> cmd;
+        private readonly CancelMessageCommand<EchoRequest> cmd;
 
-        public SendMessageCommandTests()
+        public CancelMessageCommandTests()
         {
             opt = new Mock<MessageOptions<EchoRequest>>();
             snd = new Mock<ServiceBusSender>();
 
             svc = new ServiceCollection()
 
-                .AddTransient<SendMessageCommand<EchoRequest>>()
+                .AddTransient<CancelMessageCommand<EchoRequest>>()
                 .AddTransient<IOptions<MessageOptions<EchoRequest>>>(sp => Options.Create(opt.Object))
 
                 .BuildServiceProvider();
 
-            cmd = svc.GetRequiredService<SendMessageCommand<EchoRequest>>();
+            cmd = svc.GetRequiredService<CancelMessageCommand<EchoRequest>>();
         }
 
         [Fact(DisplayName = "Command is disabled")]
@@ -73,72 +72,37 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             opt.VerifyGet(m => m.Message, Times.Never);
         }
 
-        [Fact(DisplayName = "Command uses default Message")]
+        [Fact(DisplayName = "Sequence number has no value")]
         public async Task Test4()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
             opt.SetupProperty(m => m.Sender, snd.Object);
-            opt.SetupProperty(m => m.Message, null);
-
-            snd.Setup(m => m.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None)).Returns(Task.CompletedTask);
+            opt.SetupProperty(m => m.SequenceNumber, null);
 
             await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.Sender, Times.Exactly(3));
-            opt.VerifyGet(m => m.Message, Times.Exactly(1));
+            opt.VerifyGet(m => m.Sender, Times.Once);
+            opt.VerifyGet(m => m.SequenceNumber, Times.Once);
 
-            var capturedMessages = new List<ServiceBusMessage>();
-
-            opt.Verify(m => m.Sender.SendMessageAsync(Capture.In(capturedMessages), CancellationToken.None), Times.Once);
-            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
-
-            var echoRequest = JsonConvert.DeserializeObject<EchoRequest>(capturedMessages.Single().Body.ToString());
-            
-            echoRequest.Message.Should().Be(EchoRequest.Default.Message);
+            opt.Verify(m => m.Sender.CancelScheduledMessageAsync(It.IsAny<long>(), CancellationToken.None), Times.Never);
+            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Never);
         }
 
-        [Fact(DisplayName = "Command uses specified Message")]
+        [Fact(DisplayName = "Sequence number has value")]
         public async Task Test5()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
             opt.SetupProperty(m => m.Sender, snd.Object);
-            opt.SetupProperty(m => m.Message, (cmd, ctx) => new ServiceBusMessage(BinaryData.FromString("Hello world")));
-
-            snd.Setup(m => m.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None)).Returns(Task.CompletedTask);
+            opt.SetupProperty(m => m.SequenceNumber, (ctx, req) => 1L);
 
             await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
             opt.VerifyGet(m => m.Sender, Times.Exactly(3));
-            opt.VerifyGet(m => m.Message, Times.Exactly(1));
+            opt.VerifyGet(m => m.SequenceNumber, Times.Once);
 
-            var capturedMessages = new List<ServiceBusMessage>();
-
-            opt.Verify(m => m.Sender.SendMessageAsync(Capture.In(capturedMessages), CancellationToken.None), Times.Once);
-            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
-
-            capturedMessages.Single().Body.ToString().Should().Be("Hello world");
-        }
-
-        [Fact(DisplayName = "Command throws CommandException")]
-        public async Task Test6()
-        {
-            opt.SetupProperty(m => m.IsEnabled, true);
-            opt.SetupProperty(m => m.Sender, snd.Object);
-            opt.SetupProperty(m => m.Message, (cmd, ctx) => new ServiceBusMessage(BinaryData.FromString("Hello world")));
-
-            snd.Setup(m => m.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None)).ThrowsAsync(new ArgumentNullException());
-
-            Func<Task> act = async () => await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
-
-            await act.Should().ThrowAsync<CommandException>();
-
-            opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.Sender, Times.Exactly(3));
-            opt.VerifyGet(m => m.Message, Times.Exactly(1));
-
-            opt.Verify(m => m.Sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.CancelScheduledMessageAsync(It.IsAny<long>(), CancellationToken.None), Times.Once);
             opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
         }
     }
