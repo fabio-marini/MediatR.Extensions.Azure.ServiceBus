@@ -42,9 +42,7 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
             if (sequenceNumber.HasValue == false)
             {
-                log.LogDebug("Command {Command} found no scheduled messages to cancel, returning", this.GetType().Name);
-
-                return;
+                throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid SequenceNumber");
             }
 
             try
@@ -58,10 +56,6 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 log.LogDebug(ex, "Command {Command} failed with message: {Message}", this.GetType().Name, ex.Message);
 
                 throw new CommandException($"Command {this.GetType().Name} failed, see inner exception for details", ex);
-            }
-            finally
-            {
-                await opt.Value.Sender.CloseAsync(tkn);
             }
         }
     }

@@ -1,12 +1,10 @@
 ﻿using Azure.Messaging.ServiceBus;
 using FluentAssertions;
+using MediatR.Extensions.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
-using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -79,7 +77,9 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             opt.SetupProperty(m => m.Sender, snd.Object);
             opt.SetupProperty(m => m.SequenceNumber, null);
 
-            await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
+            Func<Task> act = async () => await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
+
+            await act.Should().ThrowAsync<ArgumentNullException>();
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
             opt.VerifyGet(m => m.Sender, Times.Once);
@@ -99,11 +99,32 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.Sender, Times.Exactly(3));
+            opt.VerifyGet(m => m.Sender, Times.Exactly(2));
             opt.VerifyGet(m => m.SequenceNumber, Times.Once);
 
             opt.Verify(m => m.Sender.CancelScheduledMessageAsync(It.IsAny<long>(), CancellationToken.None), Times.Once);
-            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Never);
+        }
+
+        [Fact(DisplayName = "Command throws CommandException")]
+        public async Task Test6()
+        {
+            opt.SetupProperty(m => m.IsEnabled, true);
+            opt.SetupProperty(m => m.Sender, snd.Object);
+            opt.SetupProperty(m => m.SequenceNumber, (ctx, req) => 1L);
+
+            snd.Setup(m => m.CancelScheduledMessageAsync(It.IsAny<long>(), CancellationToken.None)).ThrowsAsync(new ArgumentNullException());
+
+            Func<Task> act = async () => await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
+
+            await act.Should().ThrowAsync<CommandException>();
+
+            opt.VerifyGet(m => m.IsEnabled, Times.Once);
+            opt.VerifyGet(m => m.Sender, Times.Exactly(2));
+            opt.VerifyGet(m => m.SequenceNumber, Times.Exactly(1));
+
+            opt.Verify(m => m.Sender.CancelScheduledMessageAsync(It.IsAny<long>(), CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Never);
         }
     }
 }

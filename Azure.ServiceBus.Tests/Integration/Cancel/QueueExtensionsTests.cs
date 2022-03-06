@@ -45,9 +45,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
 
                 .AddMediatR(this.GetType())
                 .AddTransient<ServiceBusSender>(sp => new ServiceBusClient(connectionString).CreateSender(TestEntities.QueuePath))
-                .AddTransient<ITestOutputHelper>(sp => log)
-                .AddTransient<ILogger, TestOutputLogger>()
-                .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
+                .AddLogging(log)
                 .AddCancelOptions(DateTimeOffset.UtcNow.AddMinutes(1), fix.TestQueue)
                 .AddScheduleMessageExtensions()
                 .AddScoped<PipelineContext>()
@@ -61,6 +59,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
             res.Message.Should().Be(EchoRequest.Default.Message);
 
             fix.TestQueue.Should().HaveCount(4);
+
+            await serviceProvider.GetRequiredService<ServiceBusSender>().CloseAsync();
         }
 
         [Fact(DisplayName = "03. Queue has scheduled messages")]
@@ -73,9 +73,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
 
                 .AddMediatR(this.GetType())
                 .AddTransient<ServiceBusSender>(sp => new ServiceBusClient(connectionString).CreateSender(TestEntities.QueuePath))
-                .AddTransient<ITestOutputHelper>(sp => log)
-                .AddTransient<ILogger, TestOutputLogger>()
-                .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
+                .AddLogging(log)
                 .AddCancelOptions(DateTimeOffset.UtcNow.AddMinutes(1), fix.TestQueue)
                 .AddCancelMessageExtensions()
                 .AddScoped<PipelineContext>()
@@ -87,6 +85,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
             var res = await med.Send(EchoRequest.Default);
 
             res.Message.Should().Be(EchoRequest.Default.Message);
+
+            await serviceProvider.GetRequiredService<ServiceBusSender>().CloseAsync();
         }
 
         [Fact(DisplayName = "05. Queues have messages")]

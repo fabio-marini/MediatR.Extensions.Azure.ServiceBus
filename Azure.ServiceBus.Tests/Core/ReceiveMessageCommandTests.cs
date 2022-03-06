@@ -85,10 +85,10 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             await act.Should().ThrowAsync<CommandException>();
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.Receiver, Times.Exactly(3));
+            opt.VerifyGet(m => m.Receiver, Times.Exactly(2));
 
             opt.Verify(m => m.Receiver.ReceiveMessageAsync(It.IsAny<TimeSpan?>(), CancellationToken.None), Times.Once);
-            opt.Verify(m => m.Receiver.CloseAsync(CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Receiver.CloseAsync(CancellationToken.None), Times.Never);
         }
 
         [Fact(DisplayName = "Command completes successfully")]
@@ -106,11 +106,11 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.Receiver, Times.Exactly(3));
+            opt.VerifyGet(m => m.Receiver, Times.Exactly(2));
             opt.VerifyGet(m => m.Received, Times.Once);
 
             opt.Verify(m => m.Receiver.ReceiveMessageAsync(It.IsAny<TimeSpan?>(), CancellationToken.None), Times.Once);
-            opt.Verify(m => m.Receiver.CloseAsync(CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Receiver.CloseAsync(CancellationToken.None), Times.Never);
         }
     }
 }

@@ -39,21 +39,20 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 throw new ArgumentNullException($"Command {this.GetType().Name} requires a valid Sender");
             }
 
-            var targetMessage = opt.Value.Message?.Invoke(msg, ctx) ?? new ServiceBusMessage(JsonConvert.SerializeObject(msg))
-            {
-                ScheduledEnqueueTime = DateTimeOffset.UtcNow.AddSeconds(10)
-            };
+            // enqueue time is not defaulted - it's an error if one is not provided or is in the past...
+            var enqueueTime = opt.Value.EnqueueTime?.Invoke(msg, ctx);
 
-            if (targetMessage.ScheduledEnqueueTime < DateTimeOffset.UtcNow)
+            if (enqueueTime.HasValue == false || enqueueTime.Value < DateTimeOffset.UtcNow)
             {
-                log.LogDebug("Command {Command} found schedule enqueue time in the past, returning", this.GetType().Name);
-
-                return;
+                throw new ArgumentException($"Command {this.GetType().Name} requires a valid EnqueueTime");
             }
 
             try
             {
-                var sequenceNumber = await opt.Value.Sender.ScheduleMessageAsync(targetMessage, targetMessage.ScheduledEnqueueTime, tkn);
+                // message body defaults to JSON serialization of the request
+                var targetMessage = opt.Value.Message?.Invoke(msg, ctx) ?? new ServiceBusMessage(JsonConvert.SerializeObject(msg));
+
+                var sequenceNumber = await opt.Value.Sender.ScheduleMessageAsync(targetMessage, enqueueTime.Value, tkn);
 
                 if (opt.Value.Scheduled != null)
                 {
@@ -67,10 +66,6 @@ namespace MediatR.Extensions.Azure.ServiceBus
                 log.LogDebug(ex, "Command {Command} failed with message: {Message}", this.GetType().Name, ex.Message);
 
                 throw new CommandException($"Command {this.GetType().Name} failed, see inner exception for details", ex);
-            }
-            finally
-            {
-                await opt.Value.Sender.CloseAsync(tkn);
             }
         }
     }

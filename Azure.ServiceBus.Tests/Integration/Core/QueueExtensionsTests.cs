@@ -40,9 +40,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
 
                 .AddMediatR(this.GetType())
                 .AddTransient<ServiceBusSender>(sp => new ServiceBusClient(connectionString).CreateSender(TestEntities.QueuePath))
-                .AddTransient<ITestOutputHelper>(sp => log)
-                .AddTransient<ILogger, TestOutputLogger>()
-                .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
+                .AddLogging(log)
                 .AddMessageOptions()
                 .AddSendMessageExtensions()
 
@@ -53,6 +51,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
             var res = await med.Send(EchoRequest.Default);
 
             res.Message.Should().Be(EchoRequest.Default.Message);
+
+            await serviceProvider.GetRequiredService<ServiceBusSender>().CloseAsync();
         }
 
         [Fact(DisplayName = "03. Queues have messages")]
@@ -67,9 +67,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
 
                 .AddMediatR(this.GetType())
                 .AddTransient<ServiceBusReceiver>(sp => new ServiceBusClient(connectionString).CreateReceiver(TestEntities.QueuePath, receiveOptions))
-                .AddTransient<ITestOutputHelper>(sp => log)
-                .AddTransient<ILogger, TestOutputLogger>()
-                .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
+                .AddLogging(log)
                 .AddMessageOptions()
                 .AddReceiveMessageExtensions()
 
@@ -80,6 +78,8 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
             var res = await med.Send(EchoRequest.Default);
 
             res.Message.Should().Be(EchoRequest.Default.Message);
+
+            await serviceProvider.GetRequiredService<ServiceBusReceiver>().CloseAsync();
         }
 
         [Fact(DisplayName = "05. Queues have messages")]

@@ -85,13 +85,13 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.Sender, Times.Exactly(3));
+            opt.VerifyGet(m => m.Sender, Times.Exactly(2));
             opt.VerifyGet(m => m.Message, Times.Exactly(1));
 
             var capturedMessages = new List<ServiceBusMessage>();
 
             opt.Verify(m => m.Sender.SendMessageAsync(Capture.In(capturedMessages), CancellationToken.None), Times.Once);
-            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Never);
 
             var echoRequest = JsonConvert.DeserializeObject<EchoRequest>(capturedMessages.Single().Body.ToString());
             
@@ -110,13 +110,13 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             await cmd.ExecuteAsync(EchoRequest.Default, CancellationToken.None);
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.Sender, Times.Exactly(3));
+            opt.VerifyGet(m => m.Sender, Times.Exactly(2));
             opt.VerifyGet(m => m.Message, Times.Exactly(1));
 
             var capturedMessages = new List<ServiceBusMessage>();
 
             opt.Verify(m => m.Sender.SendMessageAsync(Capture.In(capturedMessages), CancellationToken.None), Times.Once);
-            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Never);
 
             capturedMessages.Single().Body.ToString().Should().Be("Hello world");
         }
@@ -135,11 +135,11 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
             await act.Should().ThrowAsync<CommandException>();
 
             opt.VerifyGet(m => m.IsEnabled, Times.Once);
-            opt.VerifyGet(m => m.Sender, Times.Exactly(3));
+            opt.VerifyGet(m => m.Sender, Times.Exactly(2));
             opt.VerifyGet(m => m.Message, Times.Exactly(1));
 
             opt.Verify(m => m.Sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), CancellationToken.None), Times.Once);
-            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Once);
+            opt.Verify(m => m.Sender.CloseAsync(CancellationToken.None), Times.Never);
         }
     }
 }

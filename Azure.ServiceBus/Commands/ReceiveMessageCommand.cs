@@ -54,10 +54,6 @@ namespace MediatR.Extensions.Azure.ServiceBus
 
                 throw new CommandException($"Command {this.GetType().Name} failed, see inner exception for details", ex);
             }
-            finally
-            {
-                await opt.Value.Receiver.CloseAsync(tkn);
-            }
         }
     }
 }

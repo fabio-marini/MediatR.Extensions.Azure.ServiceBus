@@ -45,9 +45,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
 
                 .AddMediatR(this.GetType())
                 .AddTransient<ServiceBusSender>(sp => new ServiceBusClient(connectionString).CreateSender(TestEntities.TopicPath))
-                .AddTransient<ITestOutputHelper>(sp => log)
-                .AddTransient<ILogger, TestOutputLogger>()
-                .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
+                .AddLogging(log)
                 .AddCancelOptions(DateTimeOffset.UtcNow.AddMinutes(1), fix.TestTopic)
                 .AddScheduleMessageExtensions()
                 .AddScoped<PipelineContext>()
@@ -73,9 +71,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
 
                 .AddMediatR(this.GetType())
                 .AddTransient<ServiceBusSender>(sp => new ServiceBusClient(connectionString).CreateSender(TestEntities.TopicPath))
-                .AddTransient<ITestOutputHelper>(sp => log)
-                .AddTransient<ILogger, TestOutputLogger>()
-                .AddOptions<TestOutputLoggerOptions>().Configure(opt => opt.MinimumLogLevel = LogLevel.Information).Services
+                .AddLogging(log)
                 .AddCancelOptions(DateTimeOffset.UtcNow.AddMinutes(1), fix.TestTopic)
                 .AddCancelMessageExtensions()
                 .AddScoped<PipelineContext>()
