@@ -1,10 +1,8 @@
 ﻿using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
 using FluentAssertions;
-using MediatR.Extensions.Azure.Storage.Examples;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -12,7 +10,7 @@ using Xunit.Abstractions;
 namespace MediatR.Extensions.Azure.ServiceBus.Tests.Core
 {
     [Trait("TestCategory", "Integration"), Collection("QueueTests")]
-    [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
+    [TestCaseOrderer("Timeless.Testing.Xunit.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
     public class QueueExtensionsTests
     {
         private readonly ITestOutputHelper log;

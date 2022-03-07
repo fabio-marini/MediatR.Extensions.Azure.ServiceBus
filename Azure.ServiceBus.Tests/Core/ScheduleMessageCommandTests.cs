@@ -74,7 +74,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         }
 
         [Fact(DisplayName = "Enqueue time is not specified")]
-        public async Task Test4a()
+        public async Task Test4()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
             opt.SetupProperty(m => m.Sender, snd.Object);
@@ -89,7 +89,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         }
 
         [Fact(DisplayName = "Enqueue time is in the past")]
-        public async Task Test4b()
+        public async Task Test5()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
             opt.SetupProperty(m => m.Sender, snd.Object);
@@ -105,7 +105,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         }
 
         [Fact(DisplayName = "Command uses default Message")]
-        public async Task Test4()
+        public async Task Test6()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
             opt.SetupProperty(m => m.Sender, snd.Object);
@@ -132,7 +132,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         }
 
         [Fact(DisplayName = "Command uses specified Message")]
-        public async Task Test5()
+        public async Task Test7()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
             opt.SetupProperty(m => m.Sender, snd.Object);
@@ -162,7 +162,7 @@ namespace MediatR.Extensions.Azure.ServiceBus.Tests
         }
 
         [Fact(DisplayName = "Command throws CommandException")]
-        public async Task Test6()
+        public async Task Test8()
         {
             opt.SetupProperty(m => m.IsEnabled, true);
             opt.SetupProperty(m => m.Sender, snd.Object);

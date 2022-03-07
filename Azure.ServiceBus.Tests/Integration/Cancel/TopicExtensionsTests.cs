@@ -2,12 +2,9 @@
 using Azure.Messaging.ServiceBus.Administration;
 using FluentAssertions;
 using MediatR.Extensions.Abstractions;
-using MediatR.Extensions.Azure.Storage.Examples;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -15,7 +12,7 @@ using Xunit.Abstractions;
 namespace MediatR.Extensions.Azure.ServiceBus.Tests.Cancel
 {
     [Trait("TestCategory", "Integration"), Collection("TopicTests")]
-    [TestCaseOrderer("MediatR.Extensions.Tests.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
+    [TestCaseOrderer("Timeless.Testing.Xunit.TestMethodNameOrderer", "Timeless.Testing.Xunit")]
     public class TopicExtensionsTests : IClassFixture<SequenceNumbersFixture>
     {
         private readonly ITestOutputHelper log;

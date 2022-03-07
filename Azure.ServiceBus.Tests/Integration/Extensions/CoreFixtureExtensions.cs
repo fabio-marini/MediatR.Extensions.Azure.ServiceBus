@@ -1,5 +1,4 @@
 ﻿using Azure.Messaging.ServiceBus;
-using MediatR.Extensions.Azure.Storage.Examples;
 using MediatR.Pipeline;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Timeless.Testing.Xunit;
 using Xunit.Abstractions;
 
 namespace MediatR.Extensions.Azure.ServiceBus.Tests
